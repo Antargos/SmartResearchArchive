@@ -38,3 +38,36 @@ collision protection, failed-copy cleanup, and Change/Skip/Accept behavior.
 Test fixtures are generated temporarily, not committed. Initial sandbox execution
 could not write to the system temporary folder; the authorized run outside the
 sandbox passed. Real-paper accuracy and personal code review remain unverified.
+
+## 13 October 2026 — Experimental collection topic suggestions
+
+### Goal and branch
+User requested topics suggested from the supplied PDFs on a separate GitHub branch:
+`feature/pdf-topic-suggestions`. The original main branch remains unchanged.
+
+### Method and decisions
+Use recurring words and adjacent pairs, an editable English/German stop list,
+and document coverage scoring. Require two readable PDFs as evidence except in
+a single-document collection. Prefer phrases at equal coverage and use alphabetical
+order to make ranking reproducible. Show filenames as evidence. This is an explicit
+vocabulary heuristic, not semantic interpretation, ML or embeddings.
+
+Users accept/change/skip candidates and define up to five session-only topics.
+The approved mapping feeds the existing classifier and file review. Folder names
+are validated against path traversal, duplicate names and Windows reserved names.
+`--topics-only` reviews suggestions without moving files; `--suggest-topics` then
+continues to the usual per-file acceptance. No accepted topics means Unclassified.
+Local input is meant by supplied PDFs; no upload interface is implemented.
+
+### AI assistance and evaluation
+Codex drafted this extension and regression tests. Tests exercise document coverage,
+phrase boundaries, empty/single/disjoint collections, edits and rejected names,
+plus the complete CLI with generated PDFs. Actual scholarly usefulness still needs
+human evaluation on a local research collection; generic terms and references can
+produce weak suggestions. Topics are not persisted and collection text stays in
+memory during a run. Personal understanding/review is not claimed by this entry.
+
+### Validation result
+All 12 tests passed with Python 3.12.14 and pypdf 6.10.0, including the six original
+regression cases and six new collection/CLI cases. Temporary PDFs were created
+inside the writable workspace and removed by the tests. No PDFs were committed.

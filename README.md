@@ -57,6 +57,58 @@ never overwritten. If an operation fails, inspect input and archive: failure to
 delete an input after copying can leave two copies, without losing the original.
 
 ## Transparent classification
+### Experimental branch: topics from your collection
+
+On `feature/pdf-topic-suggestions`, you can generate vocabulary-based topic
+suggestions from the PDFs in your **local input folder**. This is not a web upload
+interface. No documents are sent to GitHub or an AI service.
+
+Using your virtual environment's Python:
+
+```sh
+# Preview and review topics only; never move files:
+python -m src.main --topics-only
+# Review topics, then review and organize each PDF:
+python -m src.main --suggest-topics
+```
+
+Both options support `--input` and `--output`. Without either option, the original
+five predefined categories are used. In suggestion mode, those categories are
+replaced for the current run by up to five topics you explicitly accept.
+
+How it works:
+
+1. Read the available PDFs and extract text locally. Unreadable/encrypted files
+   are reported and excluded; empty scans supply no topic evidence.
+2. Find words of at least four letters and adjacent word pairs, excluding a small
+   editable English/German stop list. Phrases do not bridge stopwords, numbers or
+   punctuation. No stemming or synonym detection is performed.
+3. Count **how many PDFs contain each term**, not how often it is repeated.
+   Terms must appear in at least two readable PDFs. With only one readable PDF,
+   single-document suggestions are allowed and explicitly show one PDF as evidence.
+4. Rank by document count, then prefer pairs, then alphabetical order. Show up to
+   ten candidates and their evidence filenames. Redundant individual words with
+   the same evidence as an already selected phrase are suppressed.
+5. Accept, change or skip each proposal. Change lets you set a topic name and
+   comma-separated matching keywords; accept the updated preview separately.
+   Names must use ASCII letters/numbers/spaces/underscores/hyphens (max 60 characters),
+   and cannot be duplicate, reserved device names or Unclassified.
+6. Classify each PDF with the accepted keywords and the original transparent scoring
+   rules. A separate Accept/Change/Skip review is still required for every file move.
+
+If nothing is accepted or no recurring terms are found, suggestions do not silently
+fall back to predefined topics: files receive Unclassified and can still be skipped.
+Topic choices apply only to the current session and are not saved. `--topics-only`
+ends after reviewing the topics and leaves all PDFs unchanged.
+
+These are **vocabulary suggestions, not semantic topic discovery**. Frequent names,
+generic words and bibliography terms may rank highly. Stop words and keywords can
+be adjusted in `src/suggestions.py`. Review terms critically and rename them into
+meaningful research categories. The experiment keeps extracted collection text in
+memory until the run finishes; start with a small collection. No new dependency,
+ML, embeddings, CSV or API is introduced.
+
+### Original predefined categories
 Initial categories and editable English/German keywords are in `src/analysis.py`:
 
 | Topic | Keywords |
@@ -111,6 +163,7 @@ in `docs/project-journal.md`; review with real research papers remains to be don
 | `src/analysis.py` | Text extraction, metadata guesses, keywords and scoring |
 | `src/files.py` | Scanning, filenames, collision protection and moving |
 | `src/main.py` | Command-line options and interactive review |
+| `src/suggestions.py` | Collection vocabulary, evidence and human topic approval |
 | `tests/test_archive.py` | Temporary synthetic PDFs and behavior checks |
 
 Run with the virtual environment's Python:
