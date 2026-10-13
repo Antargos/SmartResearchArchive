@@ -30,3 +30,11 @@ Metadata is a suggestion, not verified bibliographic data. Scans without a text 
 cannot be read. Keywords may occur in references or unrelated contexts. Evaluate
 metadata accuracy, classification and usability with a local collection; record
 mistakes and corrections here without uploading the papers.
+
+### Automated validation
+Six unittest cases passed with Python 3.12.14 and pypdf 6.10.0: synthetic PDF text
+and metadata extraction, corrupt/encrypted input, keyword boundaries and ties,
+collision protection, failed-copy cleanup, and Change/Skip/Accept behavior.
+Test fixtures are generated temporarily, not committed. Initial sandbox execution
+could not write to the system temporary folder; the authorized run outside the
+sandbox passed. Real-paper accuracy and personal code review remain unverified.
