@@ -113,3 +113,42 @@ but add complexity to explain in the course. Model summaries can omit nuance;
 exact quotes only establish that wording exists. Limits: 50 input PDFs and 240,000
 characters per PDF. Eligibility/preview capabilities may change; see README links.
 Personal understanding and review by the owner are not claimed by this entry.
+
+## 13 October 2026 — Windows desktop release candidate
+
+### Goal and branch
+User requested a combined desktop app, downloadable EXE and installer on a separate
+branch: `release/windows-desktop-v1`, based on the ChatGPT semantic branch. The GUI
+lets users select any PDF folder and sort confirmed files into topic subfolders of
+that same folder. Main and both earlier feature branches remain unchanged.
+
+### Implementation
+Use native Tkinter with a German four-tab workflow: folder/analysis, topic review,
+per-file confirmation and processing history. Keep the three existing analysis modes.
+Run analysis/network/copy work in background threads; pass UI updates through a queue.
+Cancellation stops between safe steps and during the OAuth callback wait. Keep the
+analysis/service layer separate from widgets. Check file hashes before and after
+copying so changed inputs do not get deleted. Skip existing subfolders and Windows
+reparse points. Credentials move to a stable, protected per-user AppData directory,
+independent of the executable and selected PDF folder.
+
+### Distribution
+Package Python/Tcl/Tk and dependencies with PyInstaller; create a per-user Inno Setup
+installer without administrator rights. Include third-party notices separately from
+the project's rights notice. No code-signing certificate or repository PDFs. Build
+on GitHub's Windows runner, run regressions and packaged startup checks, install into
+an isolated build folder, verify the installed EXE, uninstall, and publish a candidate
+release with an installer, portable ZIP, checksums and build metadata only on success.
+
+### Validation status before CI
+The 25 original tests and copy-verification regression run locally. Five new tests
+that resolve Windows paths are blocked by the local sandbox's GetFinalPathName access
+restriction. They are included in the Windows CI regression suite, not treated as
+passing yet. GUI construction and installer checks run on the Windows runner. Live
+ChatGPT eligibility and personal scholarly evaluation remain unverified.
+
+### AI assistance
+Codex drafted UI, service, packaging, documentation and regression tests. The owner
+has not yet personally reviewed the desktop app. Packaging/CI results will be recorded
+after the build; version 1.0.0 is a release candidate rather than a claim of production
+readiness. CSV, OCR, embeddings and reference-manager adapters remain outside scope.

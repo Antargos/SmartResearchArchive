@@ -1,5 +1,53 @@
 # Smart Research Archive
 
+## Windows desktop version 1.0.0
+
+Branch **`release/windows-desktop-v1`** combines the local classifier, collection
+topic suggestions and ChatGPT semantic analysis in a native German desktop UI.
+It adds a Windows EXE bundle and a per-user installer. Download the latest desktop
+candidate from [Releases](https://github.com/Antargos/SmartResearchArchive/releases).
+The Windows build creates downloads only after automated tests, packaged GUI startup,
+installation and uninstallation checks succeed.
+
+1. Install `SmartResearchArchive-1.0.0-Setup.exe` and start the app from the Start menu.
+2. Select the folder containing your PDFs, e.g. Downloads.
+3. Choose a local analysis mode or connect ChatGPT in your browser and choose a model.
+4. Review/edit up to five topics, then review every PDF's metadata and destination.
+5. **Bestätigen & einsortieren** moves that PDF into a topic subfolder **inside the
+   selected folder**. Skip leaves it untouched. Existing subfolders are not scanned.
+
+Example: `Downloads/Political History/Ada_2024_Example_Title.pdf`.
+No separate output folder is needed in the GUI. PDFs are never committed to GitHub.
+Keep backups; confirmed moves change your local collection. Existing files are not
+overwritten and changed source PDFs must be reanalyzed. Unclassified remains available.
+
+Windows 10/11 x64; no separate Python installation is needed for the packaged app.
+The portable ZIP is an alternative: extract everything and retain `_internal` beside
+the EXE. This release candidate is unsigned; live ChatGPT eligibility and scholarly
+accuracy remain to be tested with your own account. The all-rights-reserved notice
+below applies; the bundle separately includes third-party license notices.
+
+**[Windows user guide (German)](docs/windows-user-guide.md)**
+
+### Run or build from source
+
+```sh
+python -m pip install -r requirements.txt
+python desktop_app.py
+# Windows builds additionally need Inno Setup 6.3+:
+python -m pip install -r requirements-build.txt
+python tools/build_windows.py
+```
+
+`src/desktop.py` holds GUI widgets and background-job handling;
+`src/desktop_service.py` contains independently testable analysis and in-place
+sorting. OAuth/model logic remains separate. The GUI stays responsive during work;
+cancel stops at the next safe step after a current network request or copy finishes.
+See `.github/workflows/windows-desktop.yml` for the automated build/release process.
+Generated binaries are release assets, not Git source files.
+
+The remaining sections document the optional command-line interfaces and research scope.
+
 A beginner-friendly local Python tool for organizing academic PDFs for historical
 research. Academic prototype / work in progress for **Applied Programming Projects**.
 
@@ -66,13 +114,14 @@ choices apply only to the current run and are not written to an index.
 
 ### Credential storage and validation status
 
-Saved connections live in the **ignored `.chatgpt/` folder** in the current working
-directory. On Windows, credentials use encryption through the current user's
+Saved connections live under **`%LOCALAPPDATA%\SmartResearchArchive\chatgpt`** on
+Windows (or `~/.local/share/SmartResearchArchive/chatgpt` on other systems).
+Credentials are independent of installation/input folders. On Windows they use encryption through the current user's
 DPAPI. On macOS/Linux, files use owner-only permissions (600, directory 700),
-not encryption. Never share or force-add `.chatgpt/`. Use the same working directory
-to retain your installation's stable host ID and separate account registrations.
+not encryption. Never share or commit these files. This OS-user store retains
+the installation's stable host ID and separate account registrations.
 Only one ChatGPT run can use a store at a time. After a crash, first confirm no run
-is active before removing the empty `.chatgpt/runtime.lock` directory.
+is active before removing the empty `runtime.lock` directory inside the credential store.
 
 The implementation verifies PKCE/state and the identity token's signature,
 issuer, audience, expiry and nonce, plus explicit plan permission. It refreshes
@@ -103,7 +152,7 @@ This tool suggests metadata, a topic and a consistent name. You review every fil
 before it is renamed and moved. PDF contents are unchanged. Default keyword modes
 do not transmit text; the optional ChatGPT mode is described above.
 
-## Getting started
+## Command-line development (optional)
 Install Python **3.10 or newer**, download/clone the repository, then open a terminal
 in its folder. On Windows, `py` can replace `python` if needed:
 
@@ -134,7 +183,7 @@ python -m src.main --input "path/to/papers" --output "path/to/archive"
 
 Input and output must be separate folders, neither nested in the other.
 
-## Workflow
+## Command-line review workflow
 Input → text extraction → metadata suggestions → keyword scores → preview
 → Accept / Change / Skip → rename and organize.
 

@@ -1,0 +1,59 @@
+name: Windows desktop build
+
+on:
+  push:
+    branches: [release/windows-desktop-v1]
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install build dependencies
+        run: python -m pip install -r requirements-build.txt
+      - name: Run regression tests
+        run: python -m unittest discover -s tests -v
+      - name: Check source GUI startup
+        run: python desktop_app.py --smoke-test
+      - name: Ensure installer compiler
+        shell: pwsh
+        run: |
+          if (!(Test-Path 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe')) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Inno Setup installation failed' }
+          }
+      - name: Build and test EXE and installer
+        run: python tools/build_windows.py
+      - name: Save downloadable build files
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartResearchArchive-Windows-1.0.0
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish Windows release candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/release/windows-desktop-v1'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $releaseTag = 'desktop-v1.0.0-build.${{ github.run_number }}'
+          gh release create $releaseTag artifacts/SmartResearchArchive-1.0.0-Setup.exe artifacts/SmartResearchArchive-1.0.0-Portable.zip artifacts/SHA256SUMS.txt artifacts/build-info.json --target '${{ github.sha }}' --title 'Smart Research Archive 1.0.0 — Windows' --prerelease --notes-file packaging/release-notes.md
+          if ($LASTEXITCODE -ne 0) { throw 'Release upload failed' }
