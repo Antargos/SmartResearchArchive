@@ -3,10 +3,105 @@
 A beginner-friendly local Python tool for organizing academic PDFs for historical
 research. Academic prototype / work in progress for **Applied Programming Projects**.
 
+## Experimental ChatGPT integration
+
+Branch `feature/chatgpt-semantic-topics` adds optional content analysis using your
+ChatGPT plan through **Sign in with ChatGPT**. It builds on the vocabulary-suggestion
+branch. The default keyword modes remain local; ChatGPT mode sends extracted text
+and summaries to OpenAI and consumes your existing plan allowance. No embeddings.
+
+### Connect and run
+
+Reinstall requirements in your Python 3.10+ virtual environment. This branch adds
+`cryptography` for identity-token signature verification. With the environment's
+Python (on Windows `.venv\Scripts\python`):
+
+```sh
+python -m pip install -r requirements.txt
+python -m src.main --chatgpt-login
+# Preview semantic topics, without moving files:
+python -m src.main --chatgpt --topics-only
+# Suggest topics, classify documents, then review each proposed move:
+python -m src.main --chatgpt
+# Optional: use a model slug shown in your account's model catalog:
+python -m src.main --chatgpt --model YOUR_AVAILABLE_MODEL_SLUG
+# Revoke and clear a selected renewable session:
+python -m src.main --chatgpt-logout
+```
+
+Continue with ChatGPT opens your browser. Sign in, select the account/workspace,
+and authorize **ChatGPT plan usage**. A login alone is insufficient. Eligibility
+and available models are decided by OpenAI; Plus does not guarantee every account,
+workspace or model is supported. Intended for a personal project run locally;
+the repository's rights notice remains unchanged. No API key or copied browser/
+Codex credential is needed, and no separately billed API-key fallback exists.
+
+`--input` and `--output` work as before. Before sending document text, the program
+asks for `y`; any other answer cancels. Choose a saved connection or add another,
+then choose from the account-specific models. Manage usage and disconnect access
+in ChatGPT's usage and connected-app settings. This app has no separate allowance.
+
+### Semantic workflow
+
+1. Extract text locally and analyze **all sections**, each up to 12,000 characters.
+   Limit: 20 sections / 240,000 characters per PDF and 50 input PDFs per run.
+   Over-limit text is rejected, not silently truncated. OCR remains outside scope.
+2. Generate a concise document summary and short exact quotations. Quotes are
+   checked against the extracted text; fabricated quotes reject the result.
+   Multiple section summaries are synthesized. Up to three quotes are displayed
+   per document; they verify wording, not the correctness of interpretation.
+3. Suggest up to five common themes with descriptions and related PDF IDs.
+   Larger collections use batches of eight summaries and a consolidation step.
+4. Accept, change or skip topics. Edits return to a preview. Descriptions define
+   the topics by content; no keyword matching is used for semantic classification.
+5. Classify against the approved topics using the document summary and excerpts.
+   Show a reason, then require the usual Accept/Change/Skip before any move.
+   You can correct the topic. The displayed reason refers to the original suggestion.
+
+No accepted topics or no readable text means Unclassified. Invalid JSON, unsafe
+folder names, unknown document IDs/topics and failed/incomplete model streams are
+rejected. Provider errors stop the run; accepted files stay archived and unaccepted
+files stay in input. There are no automatic paid retries. Summaries and topic
+choices apply only to the current run and are not written to an index.
+
+### Credential storage and validation status
+
+Saved connections live in the **ignored `.chatgpt/` folder** in the current working
+directory. On Windows, credentials use encryption through the current user's
+DPAPI. On macOS/Linux, files use owner-only permissions (600, directory 700),
+not encryption. Never share or force-add `.chatgpt/`. Use the same working directory
+to retain your installation's stable host ID and separate account registrations.
+Only one ChatGPT run can use a store at a time. After a crash, first confirm no run
+is active before removing the empty `.chatgpt/runtime.lock` directory.
+
+The implementation verifies PKCE/state and the identity token's signature,
+issuer, audience, expiry and nonce, plus explicit plan permission. It refreshes
+tokens near expiry under the run's lock. Sign-out attempts remote revocation and
+clears local tokens; if revocation is unconfirmed, disconnect in ChatGPT settings.
+Model requests use the public Responses API with streamed, unstored requests,
+not ChatGPT's private browser endpoints. Model outputs cannot execute tools or
+choose arbitrary filesystem paths.
+
+All **25 offline tests** pass, including simulated OAuth, signed-token checks,
+Windows protected storage, incomplete responses, semantic output validation and
+the entire file-review workflow. **Live sign-in, actual account eligibility and
+scholarly classification quality have not yet been verified.** Start with your own
+sign-in and a topic-only run on a few lawfully obtained PDFs. Summarization can
+lose nuance; quotations do not make generated conclusions automatically correct.
+
+Official documentation checked on 13 October 2026:
+
+- [Registration and sign-in](https://developers.openai.com/siwc/token-sharing-open-source/sign-in)
+- [Accounts and sessions](https://developers.openai.com/siwc/token-sharing-open-source/profiles-and-sessions)
+- [Models and inference](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference)
+- [Preview limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations)
+- [Personal local projects](https://developers.openai.com/cookbook/articles/sign-in-with-chatgpt)
+
 ## Project goal
 Unsorted research PDFs and inconsistent filenames make literature hard to find.
 This tool suggests metadata, a topic and a consistent name. You review every file
-before it is renamed and moved. PDF contents are unchanged; no PDFs are uploaded.
+before it is renamed and moved. PDF contents are unchanged. Default keyword modes
+do not transmit text; the optional ChatGPT mode is described above.
 
 ## Getting started
 Install Python **3.10 or newer**, download/clone the repository, then open a terminal
@@ -138,8 +233,9 @@ ordinary journal papers. Image-only scans need OCR, which is outside version 1;
 empty text yields Unclassified and permits manual metadata entry. Encrypted or
 unreadable files are reported for manual handling and do not stop the collection.
 
-No ML, embeddings, CSV, GUI, cloud service, multi-tags or reference-manager
-integration is implemented. A local evaluation with 20–50 lawfully obtained PDFs
+The original local modes use no ML or embeddings. This branch additionally offers
+the optional external ChatGPT mode described above. CSV, GUI, multi-tags and
+reference-manager integration are not implemented. A local evaluation with 20–50 lawfully obtained PDFs
 is planned. Future possibilities include CSV, Streamlit, better metadata and
 optional Citavi or other reference-manager adapters.
 
@@ -164,6 +260,10 @@ in `docs/project-journal.md`; review with real research papers remains to be don
 | `src/files.py` | Scanning, filenames, collision protection and moving |
 | `src/main.py` | Command-line options and interactive review |
 | `src/suggestions.py` | Collection vocabulary, evidence and human topic approval |
+| `src/chatgpt_auth.py` | Browser sign-in, verified identity and protected local sessions |
+| `src/chatgpt_client.py` | Available models and completed Responses API streams |
+| `src/semantic.py` | Section summaries, semantic topics and validated model results |
+| `src/chatgpt_workflow.py` | External-processing consent and human file review |
 | `tests/test_archive.py` | Temporary synthetic PDFs and behavior checks |
 
 Run with the virtual environment's Python:
