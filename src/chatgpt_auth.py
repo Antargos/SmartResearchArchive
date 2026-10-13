@@ -23,7 +23,7 @@ AUTH = 'https://auth.openai.com'
 RESOURCE = 'https://api.openai.com/v1'
 PLAN_SCOPE = 'chatgpt.tokens.use.direct'
 SCOPES = 'openid profile email offline_access resource.invoke ' + PLAN_SCOPE
-STORE = Path('.chatgpt')
+STORE = Path(os.environ.get('LOCALAPPDATA', str(Path.home() / '.local' / 'share'))) / 'SmartResearchArchive' / 'chatgpt'
 
 
 class ConnectionError(RuntimeError):
@@ -182,7 +182,7 @@ def callback_result(query, state, existing=None):
     return one('code'), client
 
 
-def sign_in(state, previous=None, ask=input, show=print):
+def sign_in(state, previous=None, ask=input, show=print, cancelled=lambda: False):
     save(state)  # Persist this installation's host ID even if sign-in is cancelled.
     config = request(AUTH + '/.well-known/openid-configuration')
     verifier, nonce, expected = secrets.token_urlsafe(48), secrets.token_urlsafe(32), secrets.token_urlsafe(32)
@@ -231,6 +231,8 @@ def sign_in(state, previous=None, ask=input, show=print):
             raise ConnectionError('Could not open the browser. Check your default browser and try again.')
         deadline = time.monotonic() + 300
         while not result and time.monotonic() < deadline:
+            if cancelled():
+                raise ConnectionError('Sign-in cancelled.')
             server.handle_request()
     if not result:
         raise ConnectionError('Sign-in timed out. Run sign-in again.')
@@ -306,8 +308,9 @@ def refresh(state, profile):
         raise ConnectionError('ChatGPT plan usage permission is missing.')
 
 
-def sign_out(state):
-    profile = select_profile(state)
+def sign_out(state, profile=None, show=None):
+    show = print if show is None else show
+    profile = select_profile(state) if profile is None else profile
     if profile is None:
         return
     confirmed = False
@@ -324,5 +327,5 @@ def sign_out(state):
     for key in ('access_token', 'refresh_token', 'id_token', 'expires_at', 'scope', 'scopes'):
         profile.pop(key, None)
     save(state)
-    print('Signed out locally. ' + ('Renewable session revoked.' if confirmed else
+    show('Signed out locally. ' + ('Renewable session revoked.' if confirmed else
           'Remote revocation was not confirmed; disconnect the app in ChatGPT Settings.'))

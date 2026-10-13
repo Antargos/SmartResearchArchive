@@ -42,11 +42,16 @@ class ChatGPTClient:
         self.state = state
 
     @staticmethod
-    def choose_model(profile, requested=None, ask=input, show=print):
+    def list_models(profile):
         result = request(RESOURCE + '/models', token=profile['access_token'])
         models = [item for item in result.get('models', []) if item.get('visibility') == 'list']
         if not models:
             raise ConnectionError('No models are available for this ChatGPT connection.')
+        return models
+
+    @staticmethod
+    def choose_model(profile, requested=None, ask=input, show=print):
+        models = ChatGPTClient.list_models(profile)
         if requested:
             if requested not in [item['slug'] for item in models]:
                 raise ConnectionError('Requested model is not available to this account.')
