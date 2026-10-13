@@ -152,3 +152,23 @@ Codex drafted UI, service, packaging, documentation and regression tests. The ow
 has not yet personally reviewed the desktop app. Packaging/CI results will be recorded
 after the build; version 1.0.0 is a release candidate rather than a claim of production
 readiness. CSV, OCR, embeddings and reference-manager adapters remain outside scope.
+
+### Successful Windows build
+The first Windows run passed 30/31 tests and exposed a test-path comparison between
+Windows short and canonical path spellings. The assertion now uses the collection's
+canonical folder. The service also preserves destinations of processed files and
+invalidates old previews when the selected input folder or analysis mode changes.
+
+Build 2 passed all 31 tests on Windows Server 2022 / Python 3.12.10, created the GUI
+and captured its four pages with synthetic preview data, built the windowed EXE,
+passed its dependency/DPAPI self-test and packaged Tk startup check, installed into
+an isolated build directory, verified the installed EXE and uninstalled it successfully.
+The public candidate `desktop-v1.0.0-build.2` contains an installer (17,534,744 bytes),
+a portable ZIP (23,358,453 bytes), SHA256 checksums and source/build metadata.
+Build source: `38326c9369235fe3dcb24910f71f8794fbed4c9f`.
+Workflow: https://github.com/Antargos/SmartResearchArchive/actions/runs/38389684946
+Release: https://github.com/Antargos/SmartResearchArchive/releases/tag/desktop-v1.0.0-build.2
+
+The published EXE is unsigned. Real ChatGPT authorization, model quality, manual
+usability testing and scholarly evaluation remain tasks for the owner. The build
+does not authenticate as the user or send actual research PDFs to OpenAI.

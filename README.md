@@ -131,7 +131,7 @@ Model requests use the public Responses API with streamed, unstored requests,
 not ChatGPT's private browser endpoints. Model outputs cannot execute tools or
 choose arbitrary filesystem paths.
 
-All **25 offline tests** pass, including simulated OAuth, signed-token checks,
+All **31 regression tests** pass on the Windows build runner, including simulated OAuth, signed-token checks,
 Windows protected storage, incomplete responses, semantic output validation and
 the entire file-review workflow. **Live sign-in, actual account eligibility and
 scholarly classification quality have not yet been verified.** Start with your own
