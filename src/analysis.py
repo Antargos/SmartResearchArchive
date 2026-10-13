@@ -30,14 +30,15 @@ def normalize(text: str) -> str:
     return " ".join(unicodedata.normalize("NFKC", text).casefold().split())
 
 
-def classify(text: str) -> tuple[str, dict[str, list[str]]]:
+def classify(text: str, topics=None) -> tuple[str, dict[str, list[str]]]:
     """One point per distinct keyword, independent of repetition or PDF length."""
+    topics = TOPICS if topics is None else topics
     text = normalize(text)
     matches = {}
-    for topic, keywords in TOPICS.items():
+    for topic, keywords in topics.items():
         matches[topic] = [word for word in keywords
                           if re.search(r"(?<!\w)" + re.escape(word) + r"(?!\w)", text)]
-    highest = max(map(len, matches.values()))
+    highest = max(map(len, matches.values()), default=0)
     winners = [topic for topic, words in matches.items() if len(words) == highest]
     topic = winners[0] if highest > 0 and len(winners) == 1 else UNCLASSIFIED
     return topic, matches

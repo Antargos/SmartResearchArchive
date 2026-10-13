@@ -26,8 +26,17 @@ def filename(metadata: Metadata) -> str:
                      safe_part(metadata.title, "Untitled", 80))) + ".pdf"
 
 
-def destination(root: Path, topic: str, metadata: Metadata) -> Path:
-    if topic not in (*TOPICS, UNCLASSIFIED):
+def valid_topic_name(name: str) -> bool:
+    """Keep user-defined folder names portable and inside the archive."""
+    reserved = {'CON', 'PRN', 'AUX', 'NUL',
+                *(f'COM{i}' for i in range(1, 10)), *(f'LPT{i}' for i in range(1, 10))}
+    return bool(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9 _-]{0,59}', name)
+                and name == name.strip() and name.upper() not in reserved)
+
+
+def destination(root: Path, topic: str, metadata: Metadata, topics=None) -> Path:
+    topics = TOPICS if topics is None else topics
+    if topic not in (*topics, UNCLASSIFIED) or not valid_topic_name(topic):
         raise ValueError("Unknown topic")
     folder = root / topic
     if folder.is_symlink():
