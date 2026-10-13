@@ -5,3 +5,7 @@ input/
 archive/
 *.pdf
 .chatgpt/
+build/
+dist/
+artifacts/
+*.spec
