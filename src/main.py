@@ -52,11 +52,33 @@ def main():
     parser = argparse.ArgumentParser(description="Review and organize local academic PDFs.")
     parser.add_argument("--input", type=Path, default=Path("input"))
     parser.add_argument("--output", type=Path, default=Path("archive"))
-    parser.add_argument("--suggest-topics", action="store_true",
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--suggest-topics", action="store_true",
                         help="Propose and review topics from the input collection before sorting.")
+    modes.add_argument('--chatgpt', action='store_true',
+                       help='Use ChatGPT plan sign-in for semantic topic suggestions and classification.')
+    modes.add_argument('--chatgpt-login', action='store_true', help='Connect/re-authorize a ChatGPT account.')
+    modes.add_argument('--chatgpt-logout', action='store_true', help='Revoke and clear a saved ChatGPT session.')
+    parser.add_argument('--model', help='Use this account-available model slug instead of the model picker.')
     parser.add_argument("--topics-only", action="store_true",
                         help="Review topic suggestions only; never rename or move PDFs.")
     args = parser.parse_args()
+    if args.model and not args.chatgpt:
+        parser.error('--model requires --chatgpt.')
+    if args.chatgpt_login or args.chatgpt_logout:
+        from .chatgpt_auth import ConnectionError, connect, load, session_lock, sign_out
+        try:
+            with session_lock():
+                state = load()
+                if args.chatgpt_logout:
+                    sign_out(state)
+                else:
+                    connect(state, login=True)
+        except (EOFError, KeyboardInterrupt):
+            print('\nSign-in/out cancelled.')
+        except ConnectionError as error:
+            parser.exit(1, f'{error}\n')
+        return
     input_folder, output_folder = args.input.resolve(), args.output.resolve()
     if input_folder == output_folder or input_folder in output_folder.parents or output_folder in input_folder.parents:
         parser.error("Input and output folders must be separate, not nested.")
@@ -67,6 +89,16 @@ def main():
     papers = scan_pdfs(input_folder)
     if not papers:
         print("No PDFs found in the input folder.")
+    if args.chatgpt:
+        from .chatgpt_auth import ConnectionError
+        from .chatgpt_workflow import run_chatgpt
+        try:
+            run_chatgpt(papers, output_folder, review, args.model, args.topics_only)
+        except (EOFError, KeyboardInterrupt):
+            print('\nStopped. Unaccepted files remain in the input folder.')
+        except (ConnectionError, OSError) as error:
+            parser.exit(1, f'{error}\nUnaccepted files remain in input; previously accepted files stay archived.\n')
+        return
     try:
         topic_keywords = TOPICS
         loaded = {}

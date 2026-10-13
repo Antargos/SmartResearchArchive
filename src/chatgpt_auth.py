@@ -71,7 +71,7 @@ def validate_identity(token, client_id, nonce, config, now=None):
         header_text, payload_text, signature = token.split('.')
         header = json.loads(unb64(header_text))
         claims = json.loads(unb64(payload_text))
-        if header.get('alg') != 'RS256':
+        if header.get('alg') != 'RS256' or not header.get('kid'):
             raise ValueError('algorithm')
         jwks_url = config['jwks_uri']
         if urlparse(jwks_url).scheme != 'https' or urlparse(jwks_url).netloc != 'auth.openai.com':
@@ -183,6 +183,7 @@ def callback_result(query, state, existing=None):
 
 
 def sign_in(state, previous=None, ask=input, show=print):
+    save(state)  # Persist this installation's host ID even if sign-in is cancelled.
     config = request(AUTH + '/.well-known/openid-configuration')
     verifier, nonce, expected = secrets.token_urlsafe(48), secrets.token_urlsafe(32), secrets.token_urlsafe(32)
     result = {}
@@ -236,11 +237,17 @@ def sign_in(state, previous=None, ask=input, show=print):
     if 'error' in result:
         raise result['error']
     code, client = result['value']
+    if previous is None:
+        # Keep an issued registration after a failed/expired code exchange so the
+        # next attempt can reuse it. This pending profile has no verified identity.
+        previous = dict(client_id=client, subject=None, email='Pending connection')
+        state['profiles'].append(previous)
+        save(state)
     tokens = request(AUTH + '/api/accounts/oauth/token',
                      dict(grant_type='authorization_code', client_id=client, code=code,
                           code_verifier=verifier, redirect_uri=redirect, resource=RESOURCE), form=True)
     claims = validate_identity(tokens.get('id_token', ''), client, nonce, config)
-    if previous and claims['sub'] != previous['subject']:
+    if previous and previous.get('subject') and claims['sub'] != previous['subject']:
         raise ConnectionError('The signed-in identity differs from the selected profile.')
     profile = dict(tokens, client_id=client, subject=claims['sub'],
                    email=claims.get('email', 'ChatGPT account'),
@@ -274,6 +281,13 @@ def connect(state, login=False):
     state['active'] = profile['client_id']
     if PLAN_SCOPE not in profile.get('scopes', []):
         raise ConnectionError('Signed in, but ChatGPT plan usage is not enabled. Sign in again and authorize it.')
+    refresh(state, profile)
+    print(f'Using ChatGPT plan: {profile["email"]}. Manage usage in ChatGPT Settings > Usage.')
+    return profile
+
+
+def refresh(state, profile):
+    """Called before each request; the enclosing session lock serializes rotation."""
     if profile.get('expires_at', 0) <= time.time() + 60:
         if not profile.get('refresh_token'):
             raise ConnectionError('Session expired. Run --chatgpt-login again.')
@@ -290,8 +304,6 @@ def connect(state, login=False):
     save(state)
     if PLAN_SCOPE not in profile.get('scopes', []) or not profile.get('access_token'):
         raise ConnectionError('ChatGPT plan usage permission is missing.')
-    print(f'Using ChatGPT plan: {profile["email"]}. Manage usage in ChatGPT Settings > Usage.')
-    return profile
 
 
 def sign_out(state):
