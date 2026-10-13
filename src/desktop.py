@@ -44,6 +44,8 @@ class ArchiveApp:
         self.title, self.author, self.year, self.paper_topic = [tk.StringVar() for _ in range(4)]
         self.target = tk.StringVar(value='Noch keine Datei ausgewählt.')
         self.build()
+        for variable in (self.folder, self.mode):
+            variable.trace_add('write', lambda *args: self.invalidate())
         self.root.protocol('WM_DELETE_WINDOW', self.close)
         self.root.after(100, self.poll)
         if restore:
@@ -240,6 +242,16 @@ class ArchiveApp:
         if selected:
             self.folder.set(selected)
             self.status.set('Ordner gewählt. Analyse starten, um PDFs einzulesen.')
+
+    def invalidate(self):
+        if self.collection is None:
+            return
+        self.ready = False
+        self.collection = None
+        self.topic_tree.delete(*self.topic_tree.get_children())
+        self.paper_tree.delete(*self.paper_tree.get_children())
+        self.target.set('Ordner oder Analyseart geändert. Bitte neu analysieren.')
+        self.status.set('Auswahl geändert. Eine neue Analyse ist erforderlich; Dateien bleiben unverändert.')
 
     def restore_accounts(self, state):
         self.accounts = state['profiles']
@@ -438,6 +450,10 @@ class ArchiveApp:
 
     def update_target(self):
         if not self.ready or self.collection is None:
+            return
+        paper = self.selected_paper()
+        if paper and paper.archived_to:
+            self.target.set(str(paper.archived_to))
             return
         try:
             path = destination(self.collection.folder, self.paper_topic.get(), self.current_metadata(), self.collection.accepted_topics)

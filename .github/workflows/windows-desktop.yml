@@ -32,6 +32,8 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Check source GUI startup
         run: python desktop_app.py --smoke-test
+      - name: Capture desktop pages with synthetic data
+        run: python tools/preview_gui.py
       - name: Ensure installer compiler
         shell: pwsh
         run: |

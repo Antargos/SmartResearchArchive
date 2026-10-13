@@ -26,7 +26,7 @@ class DesktopTests(unittest.TestCase):
             assign(collection, approved_mapping(collection))
             self.assertTrue((folder / 'first.pdf').exists())  # Analysis never moves.
             target = archive_paper(collection, collection.papers[0], Metadata('Edited Title', 'Ada', '2024'), 'Digital History')
-            self.assertEqual(target, folder / 'Digital History' / 'Ada_2024_Edited_Title.pdf')
+            self.assertEqual(target, collection.folder / 'Digital History' / 'Ada_2024_Edited_Title.pdf')
             self.assertTrue(target.exists())
             self.assertFalse((folder / 'first.pdf').exists())
             skip_paper(collection.papers[1])

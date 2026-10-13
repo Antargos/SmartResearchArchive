@@ -27,6 +27,7 @@ class Paper:
     topic: str = UNCLASSIFIED
     reason: str = ''
     status: str = 'Offen'
+    archived_to: Path | None = None
 
 
 @dataclass
@@ -143,6 +144,8 @@ def assign(collection, topics, client=None, progress=lambda message: None, cance
     for index, paper in enumerate(collection.papers, 1):
         if cancelled():
             raise Cancelled()
+        if paper.status != 'Offen':
+            continue
         progress(f'Zuordnung {index}/{len(collection.papers)}: {paper.source.name}')
         if collection.mode == MODES[2]:
             if model is None:
@@ -172,6 +175,7 @@ def archive_paper(collection, paper, metadata, topic):
         raise ValueError('Ein Eintrag mit dem Themennamen existiert bereits und ist kein Ordner.')
     move_pdf(paper.source, target, expected_hash=paper.fingerprint)
     paper.metadata, paper.topic, paper.status = metadata, topic, 'Einsortiert'
+    paper.archived_to = target
     return target
 
 
