@@ -116,6 +116,72 @@ class LayoutTests(unittest.TestCase):
         self.assertEqual(app.models, [])
         self.assertEqual(app.model.get(), '')
 
+    def test_engine_choice_precedes_topics_and_hides_llm_controls_in_local_mode(self):
+        root, app = self.make_app(96 / 72)
+        root.update()
+        self.assertEqual(app.engine.get(), 'Lokal')
+        self.assertFalse(app.llm_panel.winfo_ismapped())
+        app.engine.set('ChatGPT (LLM)')
+        root.update()
+        self.assertTrue(app.llm_panel.winfo_ismapped())
+        app.engine.set('Lokal')
+        root.update()
+        self.assertFalse(app.llm_panel.winfo_ismapped())
+
+    def test_manual_topics_can_be_entered_before_reading_any_pdf(self):
+        root, app = self.make_app(96 / 72)
+        app.add_topic()
+        root.update()
+        app.topic_name.set('Migration')
+        app.topic_description.delete('1.0', 'end')
+        app.topic_description.insert('1.0', 'Population movements')
+        app.topic_keywords.set('migration, refugees')
+        app.update_topic()
+        self.assertIsNone(app.collection)
+        self.assertEqual(app.draft_topics[0].name, 'Migration')
+        self.assertEqual(app.draft_topics[0].keywords, ('migration', 'refugees'))
+
+    def test_saved_archive_runs_without_requiring_keywords_or_topic_proposals_again(self):
+        from pathlib import Path
+        import tempfile
+        from src.archive_store import ArchiveStore
+        from src.archive_workflow import STRATEGIES
+        from src.desktop_service import Topic
+        from test_archive import make_pdf
+        root, app = self.make_app(96 / 72)
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            make_pdf(folder / 'a.pdf')
+            ArchiveStore(folder).save_profile([Topic('Methods', 'Historical methods', keywords=('digital history',))], 'local')
+            app.folder.set(str(folder))
+            app.load_archive_profile()
+            self.assertEqual(app.strategy.get(), STRATEGIES[0])
+            def run_now(job, done):
+                done(job())
+            with patch.object(app, 'start', side_effect=run_now):
+                app.analyze()
+            self.assertTrue(app.ready)
+            self.assertEqual(app.collection.papers[0].topic, 'Methods')
+            self.assertTrue((folder / 'a.pdf').exists())
+
+    def test_open_pdf_uses_selected_original_without_moving_it(self):
+        from pathlib import Path
+        from src.analysis import Metadata
+        from src.desktop_service import MODES, Collection, Paper
+        import tempfile
+        root, app = self.make_app(96 / 72)
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            source = folder / 'a.pdf'
+            source.write_bytes(b'synthetic')
+            app.collection = Collection(folder, MODES[0], [Paper(source, Metadata('Title', 'Ada', '2024'), '', '')], [], [])
+            app.assigned(app.collection)
+            root.update()
+            with patch('src.desktop.os.startfile') as launch:
+                app.open_pdf()
+            launch.assert_called_once_with(str(source))
+            self.assertTrue(source.exists())
+
 
 if __name__ == '__main__':
     unittest.main()

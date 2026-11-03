@@ -7,7 +7,7 @@ import re
 
 from .analysis import Metadata, TOPICS, UNCLASSIFIED, classify, read_pdf
 from .chatgpt_auth import ModelOutputError
-from .files import destination, is_link, move_pdf, safe_part, scan_pdfs, valid_topic_name
+from .files import destination, filename, is_link, move_pdf, safe_part, scan_pdfs, valid_topic_name
 from .semantic import analyze_document, classify_semantically, propose_topics
 from .suggestions import suggest_topics
 
@@ -53,6 +53,7 @@ class Collection:
     errors: list[str]
     accepted_topics: dict = field(default_factory=dict)
     topic_review: str = ''
+    include_archived: bool = False
 
 
 def fingerprint(path):
@@ -191,13 +192,23 @@ def archive_paper(collection, paper, metadata, topic, archive=None):
     """One explicit confirmation moves one unchanged top-level PDF in place."""
     if paper.status != 'Offen':
         raise ValueError('Diese Datei wurde bereits bearbeitet.')
-    if (is_link(paper.source) or paper.source.resolve().parent != collection.folder
+    source_parent = paper.source.resolve().parent
+    allowed_parent = source_parent == collection.folder or (
+        collection.include_archived and source_parent.parent == collection.folder
+        and valid_topic_name(source_parent.name) and not is_link(paper.source.parent))
+    if (is_link(paper.source) or not allowed_parent
             or not paper.source.is_file() or fingerprint(paper.source) != paper.fingerprint):
         raise ValueError('Die Quelldatei wurde geändert oder verschoben. Bitte neu analysieren.')
     if not metadata.title.strip() or not metadata.author.strip():
         raise ValueError('Titel und Autor dürfen nicht leer sein; UnknownAuthor ist erlaubt.')
     if not re.fullmatch(r'\d{4}|UnknownYear', metadata.year):
         raise ValueError('Jahr: vier Ziffern oder UnknownYear.')
+    if topic not in (*collection.accepted_topics, UNCLASSIFIED) or not valid_topic_name(topic):
+        raise ValueError('Bitte ein bestätigtes Thema auswählen.')
+    desired = collection.folder / topic / filename(metadata)
+    if paper.source.resolve() == desired.resolve():
+        paper.metadata, paper.topic, paper.status, paper.archived_to = metadata, topic, 'Einsortiert', paper.source
+        return paper.source
     target = destination(collection.folder, topic, metadata, collection.accepted_topics)
     if target.parent.exists() and not target.parent.is_dir():
         raise ValueError('Ein Eintrag mit dem Themennamen existiert bereits und ist kein Ordner.')

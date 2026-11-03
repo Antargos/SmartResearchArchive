@@ -1,4 +1,4 @@
-# Smart Research Archive 1.0.3 — Windows desktop candidate
+# Smart Research Archive 2.0.0 — Windows desktop candidate
 
 Fix for collection-wide aborts caused by quote verification: PDF whitespace,
 ligatures, soft hyphens and line-end hyphenation are handled while retaining actual
@@ -17,7 +17,7 @@ confirmation, the app attempts session revocation and removes the local registra
 and credentials. Other accounts and PDFs remain untouched. Remote app grants can
 still be disconnected separately in ChatGPT settings; failed revocation is reported.
 
-Download **SmartResearchArchive-1.0.3-Setup.exe** and follow the installer.
+Download **SmartResearchArchive-2.0.0-Setup.exe** and follow the installer.
 Alternatively extract the portable ZIP and run SmartResearchArchive.exe, keeping
 the _internal folder beside it. Python does not need to be installed.
 

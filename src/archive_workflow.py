@@ -31,11 +31,17 @@ def imported_topics(folder):
 
 
 def prepare_archive(folder, mode, strategy, initial_topics, model_key='', client=None,
-                    progress=lambda message: None, cancelled=lambda: False):
+                    progress=lambda message: None, cancelled=lambda: False, include_archived=False):
     store = ArchiveStore(folder)
     store.recover_moves()
     folder = store.root
     paths = scan_pdfs(folder)
+    if include_archived:
+        folders = dict.fromkeys([t.name for t in initial_topics] + store.get('managed_folders', []) + [UNCLASSIFIED])
+        for name in folders:
+            subfolder = folder / name
+            if valid_topic_name(name) and subfolder.is_dir() and not is_link(subfolder):
+                paths.extend(scan_pdfs(subfolder))
     if mode == MODES[2] and client is None:
         raise ValueError('Bitte ChatGPT verbinden und ein Modell auswählen.')
     model = CancellableClient(client, cancelled) if client else None
@@ -53,7 +59,7 @@ def prepare_archive(folder, mode, strategy, initial_topics, model_key='', client
         try:
             digest = fingerprint(path)
             duplicate = duplicate_index.get(digest)
-            if duplicate and duplicate.exists() and content_hash(duplicate) == digest:
+            if duplicate and duplicate.resolve() != path.resolve() and duplicate.exists() and content_hash(duplicate) == digest:
                 paper = Paper(path, guess_metadata({}, '', path), digest, '', status='Duplikat', duplicate_of=duplicate,
                               reason=f'Identische PDF bereits vorhanden: {duplicate}. Nicht erneut ans LLM gesendet.')
                 papers.append(paper)
@@ -136,7 +142,7 @@ def prepare_archive(folder, mode, strategy, initial_topics, model_key='', client
                       for item in additions)
     if cancelled():
         raise Cancelled()
-    return Collection(folder, mode, papers, topics, errors, topic_review=review)
+    return Collection(folder, mode, papers, topics, errors, topic_review=review, include_archived=include_archived)
 
 
 def analyze_cached_sections(client, text, store, digest, model_key):

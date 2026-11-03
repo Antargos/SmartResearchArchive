@@ -41,6 +41,7 @@ class ArchiveApp:
         self.busy = False
         self.collection = None
         self.ready = False
+        self.audit_next = False
         self.accounts = []
         self.models = []
         self.controls = []
@@ -150,6 +151,7 @@ class ArchiveApp:
                   wraplength=600).pack(anchor='w')
         ttk.Label(page, textvariable=self.archive_info, wraplength=600, foreground='#17395c').pack(anchor='w', pady=10)
         self.button(page, 'Letzte Einsortierung rückgängig machen', self.undo).pack(anchor='w', pady=4)
+        self.button(page, 'Bestehende Sammlung ausdrücklich neu prüfen', self.audit_archive).pack(anchor='w', pady=4)
         self.button(page, 'Analysecache leeren', self.clear_cache).pack(anchor='w', pady=4)
         self.llm_panel = ttk.Frame(page)
         connection = ttk.LabelFrame(self.llm_panel, text='ChatGPT-Verbindung', padding=14)
@@ -568,6 +570,7 @@ class ArchiveApp:
         self.ready = False
         self.collection = None
         self.analysis_account, self.analysis_model, self.analysis_strategy = selected, slug, strategy
+        audit, self.audit_next = self.audit_next, False
         self.paper_tree.delete(*self.paper_tree.get_children())
         if self.restore_enabled:
             remember_folder(folder)
@@ -577,7 +580,7 @@ class ArchiveApp:
                 store.set('draft_topics', [asdict(topic) for topic in topics])
                 store.set('draft_engine', 'llm' if mode == MODES[2] else 'local')
             return self.with_client(mode, selected, slug, lambda client: prepare_archive(
-                folder, mode, strategy, topics, slug or '', client, self.report, self.cancel.is_set))
+                folder, mode, strategy, topics, slug or '', client, self.report, self.cancel.is_set, audit))
         self.start(job, self.prepared)
 
     def prepared(self, collection):
@@ -833,6 +836,16 @@ class ArchiveApp:
                     self.invalidate()
             except Exception as error:
                 messagebox.showerror('Cache', str(error), parent=self.root)
+
+    def audit_archive(self):
+        if not self.saved_profile:
+            messagebox.showinfo('Archivregeln fehlen', 'Bitte zuerst die Themen dieses Archivs bestätigen und speichern.', parent=self.root)
+            return
+        if messagebox.askyesno('Bestehende Sammlung neu prüfen?',
+                'Auch PDFs in den bereits verwalteten Themenordnern prüfen? Es entstehen zunächst nur Vorschläge. '
+                'Jede Verschiebung braucht weiterhin deine Einzelbestätigung.', parent=self.root, default='no'):
+            self.audit_next = True
+            self.analyze()
 
     def propose_additions(self):
         if not self.collection or self.collection.mode != MODES[2]:

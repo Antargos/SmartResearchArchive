@@ -247,6 +247,26 @@ class ArchiveWorkflowTests(unittest.TestCase):
         review, additions = review_topic_fit(model, {'PDF1': {'summary': 'Labor history'}}, {'Labor': 'Workers'})
         self.assertEqual(additions, [])
 
+    def test_existing_collection_is_only_included_in_explicit_audit(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'Methods').mkdir()
+            (root / 'Unrelated Folder').mkdir()
+            make_pdf(root / 'Methods' / 'Existing.pdf')
+            make_pdf(root / 'Unrelated Folder' / 'NeverRead.pdf')
+            store = ArchiveStore(root)
+            store.save_profile(definitions(), 'local')
+            normal = prepare_archive(root, MODES[0], STRATEGIES[0], definitions())
+            self.assertEqual(normal.papers, [])
+            audited = prepare_archive(root, MODES[0], STRATEGIES[0], definitions(), include_archived=True)
+            self.assertEqual(len(audited.papers), 1)
+            self.assertNotEqual(audited.papers[0].status, 'Duplikat')
+            assign_archive(audited, approved_mapping(audited), store)
+            paper = audited.papers[0]
+            target = archive_one(audited, paper, paper.metadata, 'Methods', store)
+            self.assertEqual(target.parent, store.root / 'Methods')
+            self.assertTrue((root / 'Unrelated Folder' / 'NeverRead.pdf').exists())
+
 
 if __name__ == '__main__':
     unittest.main()

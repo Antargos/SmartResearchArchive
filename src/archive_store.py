@@ -109,6 +109,7 @@ class ArchiveStore:
             for topic in topics if topic.included]}
         self.validate_profile(profile)
         self.set('profile', profile)
+        self.set('managed_folders', sorted(set(self.get('managed_folders', []) + [t['name'] for t in profile['topics']])))
         return profile
 
     def cached(self, kind, key):
@@ -146,7 +147,7 @@ class ArchiveStore:
     def duplicate_index(self, topics, cancelled=lambda: False):
         """Hash direct PDFs in known topic folders only; no text/model analysis."""
         result = {}
-        for name in [*topics, 'Unclassified']:
+        for name in dict.fromkeys([*topics, *self.get('managed_folders', []), 'Unclassified']):
             if not valid_topic_name(name):
                 continue
             folder = self.root / name

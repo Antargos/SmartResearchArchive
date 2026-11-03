@@ -18,7 +18,7 @@ paper = Paper(folder / 'Beispiel.pdf', Metadata('Digital History Methods', 'Ada 
               analysis={'summary': 'Beispiel einer historischen Forschungsarbeit über digitale Methoden.',
                         'evidence': ['Digital history']})
 collection = Collection(folder, MODES[0], [paper],
-                        [Topic(name, ', '.join(words)) for name, words in TOPICS.items()], [])
+                        [Topic(name, name, keywords=words) for name, words in TOPICS.items()], [])
 app.prepared(collection)
 app.assigned(assign(collection, {name: words for name, words in TOPICS.items()}))
 output = Path('artifacts') / 'ui-preview'
