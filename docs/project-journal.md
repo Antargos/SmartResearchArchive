@@ -221,3 +221,13 @@ records, identical email registrations, missing IDs, disk failure and endpoint
 validation; a real Tk check covers confirmation cancellation and refreshed controls.
 Tests use synthetic records only, without deleting the user's actual connections.
 Codex drafted implementation, tests and documentation using official OpenAI Docs.
+
+### Validation and update
+Windows build 4 passed 37 non-GUI cases and four dedicated real-Tk cases, including
+the confirmation-cancel/delete flow and cleared account/model controls. Packaged
+startup, installation and uninstallation checks also passed. The release candidate
+`desktop-v1.0.2-build.4` includes the updated installer and portable ZIP.
+Validated code: `2424cabc8eec9f3ea04e944ae3490be77e243849`.
+Release: https://github.com/Antargos/SmartResearchArchive/releases/tag/desktop-v1.0.2-build.4
+These are simulated-account checks; the build did not revoke or delete any real
+user connection. Runtime failure to confirm remote revocation is reported explicitly.
