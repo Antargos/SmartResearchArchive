@@ -1,39 +1,44 @@
-# Smart Research Archive 2.0.0 — Windows desktop candidate
+# Smart Research Archive 2.0.0 — Windows
 
-Fix for collection-wide aborts caused by quote verification: PDF whitespace,
-ligatures, soft hyphens and line-end hyphenation are handled while retaining actual
-source excerpts. Changed/invented quotations are still rejected. Invalid analysis
-or classification of one document now leaves it for manual review as Unclassified
-and lets the other PDFs continue. Account/network/usage failures still stop the run.
-No additional automatic model retries are introduced.
+Neuer Arbeitsablauf: zuerst lokal oder ChatGPT wählen, danach eigene Themen und
+Keywords festlegen oder Vorschläge anfordern. ChatGPT prüft eigene Regeln und bietet
+Ergänzungen separat zur Bestätigung an. Lokale Begriffshilfen sind nicht vorausgewählt.
 
-Fix for hidden analysis buttons on smaller displays and larger Windows text scaling:
-the form now scrolls, while the main action buttons remain in fixed bars. Layout
-checks cover 720×480, 800×500 and 1100×780 windows at 100%, 150% and 200% scaling.
-Close the previous app and run this installer to update your existing installation.
+Bestätigte Regeln werden im ausgewählten Archivordner gespeichert. Neue PDFs direkt
+in diesem Ordner werden beim nächsten Start nach denselben Regeln vorgeschlagen.
+Bestehende Themenordner bleiben erhalten. Eine Neubewertung bereits einsortierter
+PDFs erfolgt ausschließlich über die eigene Aktion und nach Bestätigung.
 
-New: select a saved ChatGPT connection and choose **Verbindung löschen**. After
-confirmation, the app attempts session revocation and removes the local registration
-and credentials. Other accounts and PDFs remain untouched. Remote app grants can
-still be disconnected separately in ChatGPT settings; failed revocation is reported.
+Weitere Neuerungen:
+- Metadaten aus Dateinamen, mit Herkunft und Konflikthinweisen.
+- Identische PDFs vor der LLM-Analyse erkennen, ohne sie zu löschen.
+- Erfolgreiche Text-/LLM-Schritte lokal speichern und nach Abbruch wiederverwenden.
+- PDF öffnen, später prüfen, überspringen und erneut prüfen.
+- Letzte Einsortierung sicher rückgängig machen.
+- Wiederholte manuelle Korrekturen als optionale Regelvorschläge anbieten.
+- Analyse-Zwischenspeicher separat löschen; Archivregeln und Verlauf behalten.
 
-Download **SmartResearchArchive-2.0.0-Setup.exe** and follow the installer.
-Alternatively extract the portable ZIP and run SmartResearchArchive.exe, keeping
-the _internal folder beside it. Python does not need to be installed.
+**SmartResearchArchive-2.0.0-Setup.exe** herunterladen, vorherige App schließen und
+installieren. Python ist nicht erforderlich. Alternativ die portable ZIP vollständig
+entpacken und SmartResearchArchive.exe starten; der Ordner _internal muss daneben bleiben.
 
-1. Select a folder containing PDFs, such as Downloads.
-2. Choose fixed local topics, local topic suggestions, or ChatGPT content analysis.
-3. For ChatGPT, connect in the browser, authorize plan use and select a model.
-4. Review the topics, then each PDF's metadata and proposed destination.
-5. Confirm each file to move it into a topic subfolder of the selected folder.
+1. Ordner wählen und lokal oder ChatGPT auswählen.
+2. Eigene Themen bearbeiten oder Vorschläge wählen; bei ChatGPT verbinden,
+   ein Modell wählen und externe Verarbeitung erlauben.
+3. **PDFs analysieren**, Themen prüfen und bestätigen.
+4. Jede Datei prüfen und **Bestätigen & einsortieren** wählen.
+5. Später denselben Ordner öffnen: **Archivregeln verwenden** ist voreingestellt.
 
-Keep backups. Skipped files and subfolders remain untouched. Credentials are
-stored separately and protected on Windows. No PDF collection is uploaded to GitHub.
+Die lokale Datei .smart-research-archive/archive.sqlite3 enthält Regeln,
+extrahierten Text, Zusammenfassungen, Prüffortschritt und Verschiebungsverlauf.
+Zugangsdaten werden separat im Windows-Benutzerprofil geschützt gespeichert.
+Keine PDFs oder Zugangsdaten werden nach GitHub hochgeladen.
 
-The download is a release candidate, not a claim of verified scholarly accuracy.
-Automated tests and EXE startup checks run before publication. Live ChatGPT plan
-eligibility and model quality still require your own browser sign-in and evaluation.
-The installer is not code-signed; Windows may display an unknown-publisher notice.
+Automatisierte Prüfungen verwenden synthetische PDFs und simulierte Modellantworten.
+Live-Anmeldung und wissenschaftliche Qualität müssen mit dem eigenen Konto und
+eigenen Dokumenten geprüft werden. Keine OCR. Duplikate bedeuten identischen
+Dateiinhalt; verschiedene Scans desselben Aufsatzes werden nicht gleichgesetzt.
+Bitte Sicherungskopien behalten. Der Installer ist nicht digital signiert.
 
-All rights reserved. Third-party component notices are included in the package.
-See README and docs/windows-user-guide.md in the repository for details.
+All rights reserved. Hinweise zu Drittkomponenten sind im Paket enthalten.
+Details: README und docs/windows-user-guide.md.
