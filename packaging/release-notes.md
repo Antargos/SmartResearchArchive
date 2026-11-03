@@ -1,44 +1,34 @@
-# Smart Research Archive 2.0.0 — Windows
+# Smart Research Archive 2.1.0 — Windows
 
-Neuer Arbeitsablauf: zuerst lokal oder ChatGPT wählen, danach eigene Themen und
-Keywords festlegen oder Vorschläge anfordern. ChatGPT prüft eigene Regeln und bietet
-Ergänzungen separat zur Bestätigung an. Lokale Begriffshilfen sind nicht vorausgewählt.
+Drei Analysewege:
+1. Lokal: eigene Themen und Keywords; keine automatischen lokalen Themenvorschläge.
+2. Lokal mit LLM-Keywords: eigene Oberthemen eingeben, Keywords mit ChatGPT vorschlagen
+   lassen, je Thema prüfen und übernehmen, dann Regeln bestätigen. Die PDF-Auswertung
+   erfolgt lokal. Zur Keyword-Erzeugung werden nur Themen/Beschreibungen gesendet.
+3. ChatGPT: vollständige Inhaltsanalyse mit geprüften Belegstellen und Themenzuordnung.
 
-Bestätigte Regeln werden im ausgewählten Archivordner gespeichert. Neue PDFs direkt
-in diesem Ordner werden beim nächsten Start nach denselben Regeln vorgeschlagen.
-Bestehende Themenordner bleiben erhalten. Eine Neubewertung bereits einsortierter
-PDFs erfolgt ausschließlich über die eigene Aktion und nach Bestätigung.
+Beschleunigung: höchstens zwei PDFs gleichzeitig (abschaltbar), gebündelte Zuordnung
+von bis zu vier Zusammenfassungen und kombinierte Zusammenfassung/Zuordnung bei
+bereits bestätigten Regeln. Vorhandene Analysen bleiben wiederverwendbar.
+Die reale Laufzeit hängt vom Modell, den Dokumenten und den Abo-Limits ab.
 
-Weitere Neuerungen:
-- Metadaten aus Dateinamen, mit Herkunft und Konflikthinweisen.
-- Identische PDFs vor der LLM-Analyse erkennen, ohne sie zu löschen.
-- Erfolgreiche Text-/LLM-Schritte lokal speichern und nach Abbruch wiederverwenden.
-- PDF öffnen, später prüfen, überspringen und erneut prüfen.
-- Letzte Einsortierung sicher rückgängig machen.
-- Wiederholte manuelle Korrekturen als optionale Regelvorschläge anbieten.
-- Analyse-Zwischenspeicher separat löschen; Archivregeln und Verlauf behalten.
+Lokale OCR je Seite bei fehlender/unbrauchbarer Textebene. Vorhandener Text wird
+verwendet, erfolgreiche OCR gespeichert, Original-PDFs werden nicht verändert.
+Tesseract mit Deutsch/Englisch und der PDF-Renderer sind im Windows-Paket enthalten.
+Bei fehlgeschlagenen Seiten erfolgt keine unbemerkte LLM-Auswertung eines Teiltexts:
+Die PDF bleibt zur späteren Prüfung. OCR für Handschrift/Fraktur ist nicht zugesichert.
 
-**SmartResearchArchive-2.0.0-Setup.exe** herunterladen, vorherige App schließen und
-installieren. Python ist nicht erforderlich. Alternativ die portable ZIP vollständig
-entpacken und SmartResearchArchive.exe starten; der Ordner _internal muss daneben bleiben.
+Vorherige App schließen und SmartResearchArchive-2.1.0-Setup.exe installieren.
+Python oder eine separate OCR-Installation sind für das Komplettpaket nicht nötig.
+Alternativ die portable ZIP vollständig entpacken und SmartResearchArchive.exe starten.
 
-1. Ordner wählen und lokal oder ChatGPT auswählen.
-2. Eigene Themen bearbeiten oder Vorschläge wählen; bei ChatGPT verbinden,
-   ein Modell wählen und externe Verarbeitung erlauben.
-3. **PDFs analysieren**, Themen prüfen und bestätigen.
-4. Jede Datei prüfen und **Bestätigen & einsortieren** wählen.
-5. Später denselben Ordner öffnen: **Archivregeln verwenden** ist voreingestellt.
+Bestehende Archive, Regeln, Duplikatprüfung, Einzelbestätigung, Rückgängig,
+Kontoverwaltung und Abbruch/Fortsetzen bleiben verfügbar. Die Anleitung im Paket
+beschreibt den Ablauf. PDFs und lokale Zugangsdaten werden nicht nach GitHub geladen.
 
-Die lokale Datei .smart-research-archive/archive.sqlite3 enthält Regeln,
-extrahierten Text, Zusammenfassungen, Prüffortschritt und Verschiebungsverlauf.
-Zugangsdaten werden separat im Windows-Benutzerprofil geschützt gespeichert.
-Keine PDFs oder Zugangsdaten werden nach GitHub hochgeladen.
+Automatische Prüfungen verwenden synthetische PDFs, echte lokale OCR und simulierte
+Modellantworten. Live-Anmeldung und wissenschaftliche Qualität weiterhin selbst
+prüfen. Der Installer ist nicht digital signiert. Sicherungskopien behalten.
 
-Automatisierte Prüfungen verwenden synthetische PDFs und simulierte Modellantworten.
-Live-Anmeldung und wissenschaftliche Qualität müssen mit dem eigenen Konto und
-eigenen Dokumenten geprüft werden. Keine OCR. Duplikate bedeuten identischen
-Dateiinhalt; verschiedene Scans desselben Aufsatzes werden nicht gleichgesetzt.
-Bitte Sicherungskopien behalten. Der Installer ist nicht digital signiert.
-
-All rights reserved. Hinweise zu Drittkomponenten sind im Paket enthalten.
-Details: README und docs/windows-user-guide.md.
+All rights reserved. Drittkomponenten behalten ihre eigenen Lizenzen;
+deren Hinweise sind im Download enthalten.

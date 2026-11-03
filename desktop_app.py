@@ -6,6 +6,10 @@ import sys
 
 
 def run():
+    if '--ocr-test' in sys.argv:
+        from src.ocr import ocr_self_test
+        ocr_self_test()
+        return
     if '--self-test' in sys.argv:
         # No browser, account store, real PDFs or network in this packaging check.
         from src.analysis import classify
@@ -24,7 +28,7 @@ def run():
         root.update_idletasks()
         if '--report' in sys.argv:
             path = Path(sys.argv[sys.argv.index('--report') + 1])
-            path.write_text(json.dumps({'window_created': True, 'tabs': 4, 'version': '2.0.0'}), encoding='utf-8')
+            path.write_text(json.dumps({'window_created': True, 'tabs': 4, 'version': '2.1.0'}), encoding='utf-8')
         root.destroy()
         return
     from src.desktop import main
@@ -35,7 +39,7 @@ if __name__ == '__main__':
     try:
         run()
     except Exception as error:
-        if '--self-test' in sys.argv or '--smoke-test' in sys.argv:
+        if any(flag in sys.argv for flag in ('--self-test', '--smoke-test', '--ocr-test')):
             sys.exit(1)
         # Windowed EXEs have no console. Show a useful startup error without secrets.
         from tkinter import messagebox

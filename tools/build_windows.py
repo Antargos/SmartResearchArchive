@@ -21,7 +21,7 @@ def notices(bundle):
     destination = bundle / 'third-party-notices'
     destination.mkdir(parents=True, exist_ok=True)
     for name in ('pypdf', 'cryptography', 'cffi', 'pycparser', 'pyinstaller', 'altgraph',
-                 'pyinstaller-hooks-contrib', 'packaging', 'pefile', 'pywin32-ctypes'):
+                 'pyinstaller-hooks-contrib', 'packaging', 'pefile', 'pywin32-ctypes', 'pypdfium2', 'Pillow'):
         try:
             distribution = importlib.metadata.distribution(name)
         except importlib.metadata.PackageNotFoundError:
@@ -51,12 +51,23 @@ def main():
     run(sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onedir', '--windowed',
         '--noupx', '--name', 'SmartResearchArchive', '--distpath', str(ROOT / 'dist'),
         '--workpath', str(ROOT / 'build' / 'pyinstaller'), '--specpath', str(ROOT / 'build'),
+        '--collect-all', 'pypdfium2', '--collect-all', 'pypdfium2_raw',
         '--copy-metadata', 'cryptography', '--copy-metadata', 'pypdf', 'desktop_app.py')
     bundle = ROOT / 'dist' / 'SmartResearchArchive'
+    # Ship the entire OCR runtime, including its third-party license notices.
+    ocr_source = Path(os.environ.get('ProgramFiles', 'C:/Program Files')) / 'Tesseract-OCR'
+    if not (ocr_source / 'tesseract.exe').is_file():
+        raise RuntimeError('Tesseract must be installed before building.')
+    shutil.copytree(ocr_source, bundle / 'ocr', dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns('unins*', 'Uninstall*'))
+    for language in ('deu', 'eng'):
+        if not (bundle / 'ocr' / 'tessdata' / (language + '.traineddata')).is_file():
+            raise RuntimeError('Missing OCR language: ' + language)
     notices(bundle)
     shutil.copyfile(ROOT / 'docs' / 'windows-user-guide.md', bundle / 'Anleitung.md')
     executable = bundle / 'SmartResearchArchive.exe'
     run(str(executable), '--self-test')
+    run(str(executable), '--ocr-test')
     report = ARTIFACTS / 'exe-smoke-test.json'
     run(str(executable), '--smoke-test', '--report', str(report))
     if not report.exists() or not json.loads(report.read_text())['window_created']:
@@ -69,21 +80,22 @@ def main():
     run(str(compiler), str(ROOT / 'packaging' / 'setup.iss'))
     # Test installation in an isolated build-folder destination, not the user's app.
     installed = ROOT / 'build' / 'installed-smoke'
-    setup = ARTIFACTS / 'SmartResearchArchive-2.0.0-Setup.exe'
+    setup = ARTIFACTS / 'SmartResearchArchive-2.1.0-Setup.exe'
     run(str(setup), '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', '/TASKS=',
         '/DIR=' + str(installed), '/LOG=' + str(ARTIFACTS / 'installer-test.log'))
     run(str(installed / 'SmartResearchArchive.exe'), '--self-test')
+    run(str(installed / 'SmartResearchArchive.exe'), '--ocr-test')
     run(str(installed / 'SmartResearchArchive.exe'), '--smoke-test', '--report', str(ARTIFACTS / 'installed-smoke-test.json'))
     run(str(installed / 'unins000.exe'), '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
-    archive = shutil.make_archive(str(ARTIFACTS / 'SmartResearchArchive-2.0.0-Portable'), 'zip',
+    archive = shutil.make_archive(str(ARTIFACTS / 'SmartResearchArchive-2.1.0-Portable'), 'zip',
                                   root_dir=ROOT / 'dist', base_dir='SmartResearchArchive')
     files = [setup, Path(archive)]
     checksum_lines = [hashlib.sha256(path.read_bytes()).hexdigest() + '  ' + path.name for path in files]
     (ARTIFACTS / 'SHA256SUMS.txt').write_text('\n'.join(checksum_lines) + '\n', encoding='utf-8')
     (ARTIFACTS / 'build-info.json').write_text(json.dumps(dict(
-        version='2.0.0', source_commit=os.environ.get('GITHUB_SHA', 'local'), python=sys.version,
+        version='2.1.0', source_commit=os.environ.get('GITHUB_SHA', 'local'), python=sys.version,
         pyinstaller=importlib.metadata.version('pyinstaller'), packaged_gui_test=True,
-        install_uninstall_test=True, live_chatgpt_test=False), indent=2), encoding='utf-8')
+        install_uninstall_test=True, actual_ocr_test=True, live_chatgpt_test=False), indent=2), encoding='utf-8')
 
 
 if __name__ == '__main__':

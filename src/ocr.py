@@ -107,10 +107,11 @@ def extract_document(path, store, digest, enabled=True, progress=lambda message:
                         else:
                             progress(f'{path.name}: lokale OCR für Seite {number + 1}/{len(reader.pages)} …')
                             text = recognizer(path, number, store.directory, cancelled)
-                            store.checkpoint('ocr_page', page_key, {'text': text})
                         ocr_pages.append(number + 1)
                         if text is not None and not usable_text(text):
                             raise ValueError('zu wenig verlässlich erkennbarer Text')
+                        if saved is None:
+                            store.checkpoint('ocr_page', page_key, {'text': text})
                     except Cancelled:
                         raise
                     except Exception as error:
