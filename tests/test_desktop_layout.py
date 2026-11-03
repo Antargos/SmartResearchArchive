@@ -123,6 +123,8 @@ class LayoutTests(unittest.TestCase):
         self.assertFalse(app.llm_panel.winfo_ismapped())
         app.engine.set('ChatGPT (LLM)')
         root.update()
+        app.setup_scroll.canvas.yview_moveto(1)
+        root.update()
         self.assertTrue(app.llm_panel.winfo_ismapped())
         app.engine.set('Lokal')
         root.update()

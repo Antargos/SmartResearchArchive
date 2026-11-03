@@ -15,7 +15,7 @@ from dataclasses import asdict
 from .analysis import Metadata, UNCLASSIFIED
 from .chatgpt_auth import PLAN_SCOPE, delete_profile, load, refresh, session_lock, sign_in, sign_out
 from .chatgpt_client import ChatGPTClient
-from .desktop_service import (MODES, Cancelled, Topic, approved_mapping, archive_paper,
+from .desktop_service import (MODES, Cancelled, Collection, Topic, approved_mapping, archive_paper,
                               assign, prepare, skip_paper)
 from .files import destination
 from .scrollable import ScrollableFrame
@@ -355,6 +355,9 @@ class ArchiveApp:
             self.llm_panel.pack(fill='x', pady=(16, 0))
         else:
             self.llm_panel.pack_forget()
+        # Showing a panel changes requested content size, even while the canvas
+        # keeps the existing frame size. Recalculate after Tk lays out children.
+        self.root.after_idle(self.setup_scroll.resize)
 
     def topic_list(self):
         return self.collection.topics if self.collection else self.draft_topics
