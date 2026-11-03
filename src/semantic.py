@@ -150,3 +150,34 @@ def classify_semantically(client, analysis, topics):
     if topic not in (*topics, UNCLASSIFIED):
         raise ModelOutputError('Das Modell hat ein unbekanntes Thema ausgewählt; manuelle Prüfung erforderlich.')
     return topic, text_field(result, 'reason', 800)
+
+
+def review_topic_fit(client, documents, topics):
+    """Review user rules without replacing them; return optional additions only."""
+    if not documents:
+        return 'Keine auswertbaren neuen Texte; deine Regeln bleiben bestehen.', []
+    allowed_ids = set(documents)
+    reviews, additions = [], []
+    items = list(documents.items())
+    for start in range(0, len(items), 8):
+        batch = dict(items[start:start + 8])
+        result = client.json_result(RULES +
+            'Review whether these user-defined research topics fit the document summaries. '
+            'Respect an intentionally narrow research focus. Never replace or rename a user topic. '
+            'Explain weak coverage and missing content with the supplied document IDs. '
+            'Only propose genuinely needed NEW topic additions, or an empty topics array. '
+            'Names: safe folder labels, max 60 characters. Return '
+            '{"review": string (max 1800 characters), "topics": '
+            '[{"name": string, "description": string (max 800 characters), "documents": [IDs]}]}.',
+            json.dumps({'user_topics': topics, 'document_summaries': {
+                key: value['summary'] for key, value in batch.items()}}, ensure_ascii=False))
+        reviews.append(text_field(result, 'review', 1800))
+        if result.get('topics') != []:
+            additions.extend(parse_topics(result, set(batch)))
+    known = {name.casefold() for name in topics}
+    unique = []
+    for item in additions:
+        if item['name'].casefold() not in known and set(item['documents']) <= allowed_ids:
+            unique.append(item)
+            known.add(item['name'].casefold())
+    return '\n\n'.join(reviews), unique[:5]

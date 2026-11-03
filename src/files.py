@@ -41,7 +41,7 @@ def valid_topic_name(name: str) -> bool:
     """Keep user-defined folder names portable and inside the archive."""
     reserved = {'CON', 'PRN', 'AUX', 'NUL',
                 *(f'COM{i}' for i in range(1, 10)), *(f'LPT{i}' for i in range(1, 10))}
-    return bool(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9 _-]{0,59}', name)
+    return bool(re.fullmatch(r'[^\W_][\w -]{0,59}', name, re.UNICODE)
                 and name == name.strip() and name.upper() not in reserved)
 
 

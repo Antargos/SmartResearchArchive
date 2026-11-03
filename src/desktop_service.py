@@ -30,6 +30,7 @@ class Paper:
     status: str = 'Offen'
     archived_to: Path | None = None
     analysis_problem: str = ''
+    duplicate_of: Path | None = None
 
 
 @dataclass
@@ -38,6 +39,9 @@ class Topic:
     description: str
     documents: list[str] = field(default_factory=list)
     included: bool = True
+    keywords: tuple = ()
+    origin: str = 'manual'
+    note: str = ''
 
 
 @dataclass
@@ -48,6 +52,7 @@ class Collection:
     topics: list[Topic]
     errors: list[str]
     accepted_topics: dict = field(default_factory=dict)
+    topic_review: str = ''
 
 
 def fingerprint(path):
@@ -143,9 +148,10 @@ def approved_mapping(collection):
             raise ValueError('Themenbeschreibung bitte auf 800 Zeichen begrenzen.')
         names.add(name.casefold())
         if collection.mode == MODES[2]:
-            result[name] = topic.description.strip()
+            result[name] = topic.description.strip() + (
+                '\nKeywords als inhaltliche Orientierung: ' + ', '.join(topic.keywords) if topic.keywords else '')
         else:
-            words = tuple(dict.fromkeys(word.strip().casefold() for word in topic.description.split(',')
+            words = tuple(dict.fromkeys(word.strip().casefold() for word in (topic.keywords or topic.description.split(','))
                                         if word.strip()))
             if not words:
                 raise ValueError('Mindestens ein Keyword pro Thema ist erforderlich.')
@@ -181,7 +187,7 @@ def assign(collection, topics, client=None, progress=lambda message: None, cance
     return collection
 
 
-def archive_paper(collection, paper, metadata, topic):
+def archive_paper(collection, paper, metadata, topic, archive=None):
     """One explicit confirmation moves one unchanged top-level PDF in place."""
     if paper.status != 'Offen':
         raise ValueError('Diese Datei wurde bereits bearbeitet.')
@@ -195,7 +201,10 @@ def archive_paper(collection, paper, metadata, topic):
     target = destination(collection.folder, topic, metadata, collection.accepted_topics)
     if target.parent.exists() and not target.parent.is_dir():
         raise ValueError('Ein Eintrag mit dem Themennamen existiert bereits und ist kein Ordner.')
+    operation = archive.begin_move(paper, target, metadata, topic) if archive else None
     move_pdf(paper.source, target, expected_hash=paper.fingerprint)
+    if archive:
+        archive.mark_move(operation, 'completed')
     paper.metadata, paper.topic, paper.status = metadata, topic, 'Einsortiert'
     paper.archived_to = target
     return target
