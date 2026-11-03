@@ -378,3 +378,23 @@ dedicated GUI checks and source startup, and reached packaging. Additional check
 cover interrupted concurrent work and resuming partial OCR. Final installer/build
 results are recorded below when complete. Simulated-provider tests demonstrate
 request reductions and actual overlap, not a guaranteed live speed multiplier.
+
+### Final validation and published Windows package
+
+Windows build 11 passed the regression suite (92 discovered tests, with GUI and
+real OCR separately enabled), all 13 processing checks including real OCR, and all
+10 dedicated Tk checks. That is 92 distinct passing tests: 81 non-GUI cases,
+one additional real-OCR case and ten GUI cases. Geometry remains checked at
+720x480, 800x500 and 1100x780 with 100/150/200 percent scaling.
+
+The EXE and installed app passed self-test, GUI startup and actual synthetic-scan
+OCR. Installation and uninstallation also succeeded. No real account, live model
+request or copyrighted research PDF was used. The timing benefit with a live
+provider remains dependent on model, document lengths and account limits.
+
+Validated source: 63032bb11b84f6a0cfe10405fbd705cde6172704.
+Release: https://github.com/Antargos/SmartResearchArchive/releases/tag/desktop-v2.1.0-build.11
+Published installer (~54 MB), portable ZIP (~76 MB), SHA256 checksums and build
+information. OCR runtime and German/English data are included. The installer remains
+unsigned. Project code remains all rights reserved; bundled third-party notices do
+not grant an open-source license to this project.
