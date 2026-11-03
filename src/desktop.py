@@ -732,7 +732,9 @@ class ArchiveApp:
             self.target.set(f'Duplikat — unverändert belassen. Vorhanden: {paper.duplicate_of}')
             return
         try:
-            path = destination(self.collection.folder, self.paper_topic.get(), self.current_metadata(), self.collection.accepted_topics)
+            current = paper.source if paper and self.collection.include_archived else None
+            path = destination(self.collection.folder, self.paper_topic.get(), self.current_metadata(),
+                               self.collection.accepted_topics, current_file=current)
             self.target.set(str(path))
         except ValueError:
             self.target.set('Bitte ein bestätigtes Thema auswählen.')

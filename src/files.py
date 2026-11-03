@@ -45,7 +45,7 @@ def valid_topic_name(name: str) -> bool:
                 and name == name.strip() and name.upper() not in reserved)
 
 
-def destination(root: Path, topic: str, metadata: Metadata, topics=None) -> Path:
+def destination(root: Path, topic: str, metadata: Metadata, topics=None, current_file=None) -> Path:
     topics = TOPICS if topics is None else topics
     if topic not in (*topics, UNCLASSIFIED) or not valid_topic_name(topic):
         raise ValueError("Unknown topic")
@@ -53,6 +53,9 @@ def destination(root: Path, topic: str, metadata: Metadata, topics=None) -> Path
     if is_link(folder):
         raise ValueError("Topic folder must not be a symbolic link")
     candidate = folder / filename(metadata)
+    # An explicit archive audit may keep a correctly named PDF at its own path.
+    if current_file is not None and candidate.resolve() == Path(current_file).resolve():
+        return candidate
     number = 2
     while candidate.exists():
         candidate = folder / f"{Path(filename(metadata)).stem}_{number}.pdf"

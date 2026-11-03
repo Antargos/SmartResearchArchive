@@ -266,6 +266,17 @@ class ArchiveWorkflowTests(unittest.TestCase):
             target = archive_one(audited, paper, paper.metadata, 'Methods', store)
             self.assertEqual(target.parent, store.root / 'Methods')
             self.assertTrue((root / 'Unrelated Folder' / 'NeverRead.pdf').exists())
+            # A second audit must preview and keep the canonical name, not _2.
+            from src.files import destination
+            again = prepare_archive(root, MODES[0], STRATEGIES[0], definitions(), include_archived=True)
+            assign_archive(again, approved_mapping(again), store)
+            existing = again.papers[0]
+            preview = destination(store.root, 'Methods', existing.metadata, again.accepted_topics,
+                                  current_file=existing.source)
+            self.assertEqual(preview, target)
+            previous_move = store.last_move()
+            self.assertEqual(archive_one(again, existing, existing.metadata, 'Methods', store), target)
+            self.assertEqual(store.last_move(), previous_move)
 
 
 if __name__ == '__main__':
