@@ -89,7 +89,8 @@ class ArchiveStore:
 
     @staticmethod
     def validate_profile(profile):
-        if profile.get('format_version') != FORMAT_VERSION or profile.get('engine') not in ('local', 'llm'):
+        if (profile.get('format_version') != FORMAT_VERSION or profile.get('engine') not in ('local', 'llm')
+                or profile.get('workflow', profile.get('engine')) not in ('local', 'hybrid', 'llm')):
             raise ValueError('Dieses Archivprofil hat ein unbekanntes Format.')
         themes, names = profile.get('topics'), set()
         if not isinstance(themes, list) or len(themes) > 5:
@@ -103,8 +104,8 @@ class ArchiveStore:
                 raise ValueError('Das Archiv enthält ungültige Themenregeln.')
             names.add(name.casefold())
 
-    def save_profile(self, topics, engine):
-        profile = {'format_version': FORMAT_VERSION, 'engine': engine, 'topics': [
+    def save_profile(self, topics, engine, workflow=None):
+        profile = {'format_version': FORMAT_VERSION, 'engine': engine, 'workflow': workflow or engine, 'topics': [
             {'name': topic.name, 'description': topic.description, 'keywords': list(topic.keywords)}
             for topic in topics if topic.included]}
         self.validate_profile(profile)

@@ -28,16 +28,24 @@ def text_field(value, key, limit):
     return result.strip()
 
 
-def analyze_document(client, text):
+def analyze_document(client, text, topics=None):
     parts, quotes, warnings = [], [], []
-    for number, fragment in enumerate(chunks(text), 1):
-        result = client.json_result(RULES +
+    fragments = chunks(text)
+    def summary_request(instruction, content, final):
+        if topics and final:
+            instruction += (' Also classify this document against allowed_topics. Return extra fields '
+                            '"topic" (one exact allowed name or Unclassified) and "reason" (max 800 characters). '
+                            'Use Unclassified for ambiguous or insufficient evidence.')
+            content['allowed_topics'] = topics
+        return client.json_result(instruction, json.dumps(content, ensure_ascii=False))
+    for number, fragment in enumerate(fragments, 1):
+        result = summary_request(RULES +
             'Summarize the subject, research question, period and principal arguments. '
             'Return {"summary": string (max 1200 characters), "evidence": '
             'array of 1 to 3 exact short quotations (max 200 characters each)}. '
             'Copy quotations directly from document_text in the original language. '
             'Do not translate, paraphrase, change words or insert ellipses.',
-            json.dumps({'section': number, 'document_text': fragment}, ensure_ascii=False))
+            {'section': number, 'document_text': fragment}, len(fragments) == 1)
         parts.append(text_field(result, 'summary', 1200))
         evidence = result.get('evidence')
         if not isinstance(evidence, list) or not 1 <= len(evidence) <= 3:
@@ -54,15 +62,84 @@ def analyze_document(client, text):
     if len(parts) == 1:
         summary = parts[0]
     else:
-        result = client.json_result(RULES +
+        result = summary_request(RULES +
             'Combine all section summaries into one faithful document summary. '
             'Return {"summary": string, max 1200 characters}. Preserve important qualifications.',
-            json.dumps({'section_summaries': parts}, ensure_ascii=False))
+            {'section_summaries': parts}, True)
         summary = text_field(result, 'summary', 1200)
     analysis = {'summary': summary, 'evidence': list(dict.fromkeys(quotes))[:3]}
     if warnings:
         analysis['warnings'] = warnings
+    if topics:
+        try:
+            topic, reason = parse_assignment(result, topics)
+            analysis['assignment'] = {'rules': topics, 'topic': topic, 'reason': reason}
+        except ModelOutputError as error:
+            analysis['assignment'] = {'rules': topics, 'topic': UNCLASSIFIED, 'reason': str(error)}
     return analysis
+
+
+def parse_assignment(result, topics):
+    topic = text_field(result, 'topic', 60)
+    if topic not in (*topics, UNCLASSIFIED):
+        raise ModelOutputError('Unbekanntes Modellthema; bitte manuell prüfen.')
+    return topic, text_field(result, 'reason', 800)
+
+
+def generate_keywords(client, definitions):
+    """Only user-entered definitions are sent; never document text or filenames."""
+    if not definitions or len(definitions) > 5:
+        raise ValueError('Bitte ein bis fünf Oberthemen auswählen.')
+    result = client.json_result(RULES +
+        'Generate precise matching keywords for the user-defined research topics. Do not rename, add or remove topics. '
+        'Prefer specific multiword phrases that preserve the period and subject; avoid generic standalone words. '
+        'Include useful German and English equivalents and spelling variants. No wildcards or regular expressions. '
+        'These are literal keyword rules, not semantic understanding. Return '
+        '{"topics": [{"name": exact supplied name, "keywords": [5 to 25 strings, max 100 characters each], '
+        '"reason": string (max 500 characters)}]}.', json.dumps({'user_topics': definitions}, ensure_ascii=False))
+    entries = result.get('topics')
+    if not isinstance(entries, list) or len(entries) != len(definitions):
+        raise ModelOutputError('Keyword-Vorschlag enthält nicht genau die vorgegebenen Oberthemen.')
+    approved = {}
+    for item in entries:
+        if not isinstance(item, dict):
+            raise ModelOutputError('Ungültiger Keyword-Vorschlag.')
+        name, words = item.get('name'), item.get('keywords')
+        if (not isinstance(name, str) or name not in definitions or name in approved
+                or not isinstance(words, list) or not 5 <= len(words) <= 25
+                or any(not isinstance(w, str) or not w.strip() or len(w) > 100 or ',' in w for w in words)):
+            raise ModelOutputError('Keyword-Vorschlag enthält ungültige Namen oder Begriffe.')
+        approved[name] = {'keywords': list(dict.fromkeys(w.strip().casefold() for w in words)),
+                          'reason': text_field(item, 'reason', 500)}
+    return approved
+
+
+def classify_batch(client, documents, topics):
+    """One request for up to four summaries; validate each document separately."""
+    result = client.json_result(RULES +
+        'Classify each document by meaning against allowed_topics. Return exactly one result per supplied ID. '
+        'Use Unclassified for ambiguous or insufficient evidence. Return '
+        '{"results": [{"id": exact document ID, "topic": exact allowed name or Unclassified, '
+        '"reason": string (max 800 characters)}]}.',
+        json.dumps({'documents': documents, 'allowed_topics': topics}, ensure_ascii=False))
+    rows = result.get('results')
+    if not isinstance(rows, list):
+        raise ModelOutputError('Keine gültige Liste von Dokumentzuordnungen.')
+    by_id = {}
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get('id'), str) or row['id'] not in documents:
+            raise ModelOutputError('Unbekannte Dokument-ID in der gebündelten Zuordnung.')
+        by_id.setdefault(row['id'], []).append(row)
+    assignments = {}
+    for identifier in documents:
+        try:
+            matches = by_id.get(identifier, [])
+            if len(matches) != 1:
+                raise ModelOutputError('Fehlende oder doppelte Zuordnung; bitte manuell prüfen.')
+            assignments[identifier] = parse_assignment(matches[0], topics)
+        except ModelOutputError as error:
+            assignments[identifier] = (UNCLASSIFIED, str(error))
+    return assignments
 
 
 def parse_topics(result, known_ids):

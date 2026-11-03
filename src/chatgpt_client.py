@@ -1,6 +1,7 @@
 """Public Responses API with account-specific models and completed SSE results."""
 
 import json
+import threading
 
 from .chatgpt_auth import ConnectionError, ModelOutputError, RESOURCE, refresh, request
 
@@ -40,6 +41,7 @@ class ChatGPTClient:
         self.profile = profile
         self.model = model
         self.state = state
+        self.refresh_lock = threading.Lock()
 
     @staticmethod
     def list_models(profile):
@@ -65,14 +67,17 @@ class ChatGPTClient:
             show('Choose an available model number.')
 
     def json_result(self, instructions, content):
-        if self.state is not None:
-            refresh(self.state, self.profile)
+        # Rotate a renewable session once even when two PDFs run concurrently.
+        with self.refresh_lock:
+            if self.state is not None:
+                refresh(self.state, self.profile)
+            access_token = self.profile['access_token']
         # The plan-usage preview requires streamed, unstored requests. No API key,
         # backend-api route, tools, hidden retry, temperature or unsupported fields.
         response = request(RESOURCE + '/responses',
                            dict(model=self.model, instructions=instructions,
                                 input=[{'role': 'user', 'content': content}],
-                                store=False, stream=True), token=self.profile['access_token'], stream=True)
+                                store=False, stream=True), token=access_token, stream=True)
         with response:
             text = completed_text(response)
         try:
