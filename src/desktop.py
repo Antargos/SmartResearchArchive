@@ -21,11 +21,12 @@ from .files import destination
 from .scrollable import ScrollableFrame
 from .archive_store import ArchiveStore, existing_profile
 from .archive_workflow import (STRATEGIES, archive_one, assign_archive, imported_topics,
-                               prepare_archive, profile_topics, undo_last)
+                               prepare_archive, profile_topics, undo_last, keyword_draft)
 from .preferences import last_folder, remember_folder
 from .semantic import review_topic_fit
 
-VERSION = '2.0.0'
+VERSION = '2.1.0'
+ENGINES = {'Lokal': 'local', 'Lokal mit LLM-Keywords': 'hybrid', 'ChatGPT (LLM)': 'llm'}
 
 
 class ArchiveApp:
@@ -42,6 +43,7 @@ class ArchiveApp:
         self.collection = None
         self.ready = False
         self.audit_next = False
+        self.keyword_proposals = {}
         self.accounts = []
         self.models = []
         self.controls = []
@@ -62,6 +64,9 @@ class ArchiveApp:
         self.model = tk.StringVar()
         self.status = tk.StringVar(value='Ordner auswählen und Analyse starten.')
         self.external = tk.BooleanVar(value=False)
+        self.ocr_enabled = tk.BooleanVar(value=True)
+        self.parallel = tk.BooleanVar(value=True)
+        self.processing_info = tk.StringVar()
         self.topic_name = tk.StringVar()
         self.topic_included = tk.BooleanVar(value=True)
         self.title, self.author, self.year, self.paper_topic = [tk.StringVar() for _ in range(4)]
@@ -135,11 +140,14 @@ class ArchiveApp:
         self.setup_scroll.pack(fill='both', expand=True)
         page = self.setup_scroll.content
         ttk.Label(page, text='1. Wie möchtest du analysieren?', style='Heading.TLabel').pack(anchor='w')
-        self.control(ttk.Combobox(page, textvariable=self.engine, values=('Lokal', 'ChatGPT (LLM)'),
-                                  state='readonly', width=40), 'readonly').pack(anchor='w', pady=(8, 12))
+        self.control(ttk.Combobox(page, textvariable=self.engine, values=tuple(ENGINES),
+                                  state='readonly', width=42), 'readonly').pack(anchor='w', pady=(8, 12))
+        ttk.Label(page, text='Lokal: eigene Keywords. Mischmodus: LLM schlägt Keywords vor, PDFs werden lokal sortiert.\n'
+                  'ChatGPT: vollständige inhaltliche Analyse der PDF-Texte.', wraplength=600).pack(anchor='w', pady=(0, 10))
         ttk.Label(page, text='2. Woher kommen die Themen?', style='Heading.TLabel').pack(anchor='w')
-        self.control(ttk.Combobox(page, textvariable=self.strategy, values=STRATEGIES,
-                                  state='readonly', width=40), 'readonly').pack(anchor='w', pady=8)
+        self.strategy_box = self.control(ttk.Combobox(page, textvariable=self.strategy, values=STRATEGIES,
+                                  state='readonly', width=42), 'readonly')
+        self.strategy_box.pack(anchor='w', pady=8)
         self.button(page, 'Themen / Keywords festlegen oder bearbeiten', self.edit_rules).pack(anchor='w', pady=(0, 14))
         ttk.Label(page, text='Welchen Ordner möchtest du sortieren?', style='Heading.TLabel').pack(anchor='w')
         row = ttk.Frame(page)
@@ -153,6 +161,10 @@ class ArchiveApp:
         self.button(page, 'Letzte Einsortierung rückgängig machen', self.undo).pack(anchor='w', pady=4)
         self.button(page, 'Bestehende Sammlung ausdrücklich neu prüfen', self.audit_archive).pack(anchor='w', pady=4)
         self.button(page, 'Analysecache leeren', self.clear_cache).pack(anchor='w', pady=4)
+        self.control(ttk.Checkbutton(page, variable=self.ocr_enabled,
+            text='Lokale OCR bei fehlender oder unbrauchbarer Textebene')).pack(anchor='w', pady=6)
+        ttk.Label(page, text='OCR nur bei Bedarf je Seite, Deutsch/Englisch. Original-PDF bleibt unverändert.',
+                  wraplength=600).pack(anchor='w')
         self.llm_panel = ttk.Frame(page)
         connection = ttk.LabelFrame(self.llm_panel, text='ChatGPT-Verbindung', padding=14)
         connection.pack(fill='x')
@@ -176,6 +188,8 @@ class ArchiveApp:
                      text='Externe Verarbeitung mit ChatGPT erlauben')).pack(anchor='w', pady=(16, 5))
         ttk.Label(self.llm_panel, text='Mit diesem Häkchen stimmst du zu, PDF-Texte und Zusammenfassungen an OpenAI zu übermitteln.',
                   wraplength=600).pack(anchor='w', pady=(0, 5))
+        self.control(ttk.Checkbutton(self.llm_panel, variable=self.parallel,
+            text='Vollständige LLM-Analyse: zwei PDFs gleichzeitig bearbeiten')).pack(anchor='w', pady=6)
         ttk.Label(self.llm_panel, text='ChatGPT verwendet deine freigegebenen Abo-Limits. Kein API-Schlüssel und kein automatischer Wechsel zu kostenpflichtiger API-Nutzung.',
                   wraplength=600).pack(anchor='w')
 
@@ -193,6 +207,12 @@ class ArchiveApp:
         ttk.Label(page, text='Themen auswählen und anpassen', style='Heading.TLabel').pack(anchor='w')
         ttk.Label(page, text='Bis zu fünf Themen. Eigene Regeln bleiben erhalten. Neue Vorschläge werden erst nach deiner Bestätigung gespeichert.', wraplength=600).pack(anchor='w', pady=(5, 12))
         ttk.Label(page, textvariable=self.fit_review, wraplength=700, foreground='#17395c').pack(anchor='w', pady=6)
+        self.keyword_panel = ttk.LabelFrame(page, text='Keywords aus deinen Oberthemen', padding=8)
+        self.generate_keywords_button = self.button(self.keyword_panel, 'Keywords mit LLM vorschlagen', self.generate_keyword_rules)
+        self.generate_keywords_button.pack(anchor='w', pady=3)
+        self.keyword_preview = tk.StringVar()
+        ttk.Label(self.keyword_panel, textvariable=self.keyword_preview, wraplength=650).pack(anchor='w', pady=5)
+        self.button(self.keyword_panel, 'Keyword-Entwurf für dieses Thema übernehmen', self.apply_keyword_rules).pack(anchor='w', pady=3)
         self.topic_tree = ttk.Treeview(page, columns=('name', 'included', 'evidence'), show='headings', height=7)
         for column, label, width in (('name', 'Thema', 300), ('included', 'Verwenden', 100), ('evidence', 'Zugehörige PDFs', 500)):
             self.topic_tree.heading(column, text=label)
@@ -327,7 +347,8 @@ class ArchiveApp:
             self.saved_profile = existing_profile(self.folder.get()) if Path(self.folder.get()).is_dir() else None
             if self.saved_profile is not None:
                 self.draft_topics = profile_topics(self.saved_profile)
-                self.engine.set('ChatGPT (LLM)' if self.saved_profile['engine'] == 'llm' else 'Lokal')
+                workflow = self.saved_profile.get('workflow', self.saved_profile['engine'])
+                self.engine.set(next(name for name, key in ENGINES.items() if key == workflow))
                 self.strategy.set(STRATEGIES[0])
                 self.archive_info.set(f'Archiv erkannt: {len(self.draft_topics)} gespeicherte Themen. Neue PDFs werden mit diesen Regeln einsortiert.')
             else:
@@ -336,12 +357,13 @@ class ArchiveApp:
                 if state_path.is_file():
                     store = ArchiveStore(self.folder.get())
                     self.draft_topics = [Topic(**item) for item in store.get('draft_topics', [])]
-                    self.engine.set('ChatGPT (LLM)' if store.get('draft_engine') == 'llm' else 'Lokal')
+                    self.engine.set(next((name for name, key in ENGINES.items() if key == store.get('draft_engine')), 'Lokal'))
                 if self.strategy.get() == STRATEGIES[0]:
                     self.strategy.set(STRATEGIES[1])
                 self.archive_info.set('Noch kein Archivprofil. Themen einmalig festlegen, vorschlagen oder vorhandene Ordner übernehmen.')
                 if self.draft_topics:
                     self.archive_info.set('Gespeicherter Themenentwurf gefunden. Du kannst die unterbrochene Vorbereitung fortsetzen.')
+            self.keyword_proposals = {}
             self.render_topics()
         except Exception as error:
             self.saved_profile = None
@@ -351,13 +373,23 @@ class ArchiveApp:
         mode = MODES[2] if self.engine.get() == 'ChatGPT (LLM)' else MODES[0]
         if self.mode.get() != mode:
             self.mode.set(mode)
-        if self.engine.get() == 'ChatGPT (LLM)':
+        full = mode == MODES[2]
+        choices = STRATEGIES if full else tuple(s for s in STRATEGIES if s != STRATEGIES[2])
+        self.strategy_box.configure(values=choices)
+        if self.strategy.get() not in choices:
+            self.strategy.set(STRATEGIES[1])
+        if self.engine.get() != 'Lokal':
             self.llm_panel.pack(fill='x', pady=(16, 0))
         else:
             self.llm_panel.pack_forget()
-        # Showing a panel changes requested content size, even while the canvas
-        # keeps the existing frame size. Recalculate after Tk lays out children.
+        self.processing_info.set('PDF-Texte und Zusammenfassungen werden an OpenAI gesendet.' if full else
+            'Für Keyword-Vorschläge werden nur deine Themen und Beschreibungen gesendet. PDF-Auswertung bleibt lokal.')
+        if self.engine.get() == 'Lokal mit LLM-Keywords':
+            self.keyword_panel.pack(fill='x', before=self.topic_tree, pady=8)
+        else:
+            self.keyword_panel.pack_forget()
         self.root.after_idle(self.setup_scroll.resize)
+        self.root.after_idle(self.topics_scroll.resize)
 
     def topic_list(self):
         return self.collection.topics if self.collection else self.draft_topics
@@ -386,9 +418,59 @@ class ArchiveApp:
         elif self.strategy.get() == STRATEGIES[0] and self.saved_profile:
             self.draft_topics = profile_topics(self.saved_profile)
             self.strategy.set(STRATEGIES[1])
-        self.fit_review.set('Regeln einmalig festlegen. Das Archiv merkt sich bestätigte Themen und Keywords.')
+        self.fit_review.set('Im Mischmodus erst Oberthemen eingeben, dann Keywords vorschlagen und prüfen. Regeln einmalig festlegen. Das Archiv merkt sich bestätigte Themen und Keywords.')
         self.render_topics()
         self.tabs.select(self.topic_page)
+
+    def generate_keyword_rules(self):
+        if self.engine.get() != 'Lokal mit LLM-Keywords':
+            messagebox.showinfo('Mischmodus wählen', 'Bitte zuerst Lokal mit LLM-Keywords auswählen.', parent=self.root)
+            return
+        if not self.external.get() or not self.account_id or not self.model_slug():
+            messagebox.showinfo('ChatGPT vorbereiten', 'Bitte Konto und Modell verbinden und externe Verarbeitung erlauben.', parent=self.root)
+            return
+        if not Path(self.folder.get()).is_dir():
+            messagebox.showinfo('Ordner wählen', 'Bitte zuerst den Archivordner auswählen.', parent=self.root)
+            return
+        self.update_topic()
+        definitions = deepcopy(self.topic_list())
+        try:
+            approved_mapping(Collection(Path(self.folder.get()), MODES[2], [], definitions, []))
+            if not any(t.included for t in definitions):
+                raise ValueError('Bitte mindestens ein Oberthema auswählen.')
+        except ValueError as error:
+            messagebox.showerror('Oberthemen prüfen', str(error), parent=self.root)
+            return
+        folder, selected, slug = self.folder.get(), self.account_id, self.model_slug()
+        def job():
+            store = ArchiveStore(folder)
+            store.set('draft_topics', [asdict(topic) for topic in definitions])
+            store.set('draft_engine', 'hybrid')
+            return self.with_client(MODES[2], selected, slug,
+                lambda client: keyword_draft(definitions, client, store, slug))
+        def done(proposals):
+            self.keyword_proposals = proposals
+            self.topic_selected()
+            self.fit_review.set('Keyword-Vorschläge je Thema prüfen und als Entwurf übernehmen. '
+                                'Erst Regeln bestätigen & weiter speichert sie als Archivregeln.')
+            self.status.set('Keywords vorgeschlagen. Noch keine PDF gelesen, keine Archivregel geändert.')
+            self.root.after_idle(self.topics_scroll.resize)
+        self.start(job, done)
+
+    def apply_keyword_rules(self):
+        selected = self.topic_tree.selection()
+        if not selected:
+            return
+        topic = self.topic_list()[int(selected[0])]
+        proposal = self.keyword_proposals.get(topic.name)
+        if proposal is None:
+            return
+        # Copy only into the visible form. Saving and the global rule confirmation
+        # remain explicit, just like manually entered keywords.
+        self.topic_keywords.set(', '.join(proposal['keywords']))
+        self.update_topic()
+        self.fit_review.set('Keyword-Entwurf übernommen. Bitte prüfen und Regeln bestätigen & weiter wählen.')
+        self.ready = False
 
     def validate_draft(self, topics, mode):
         candidate = Collection(Path(self.folder.get()), mode, [], topics, [])
@@ -574,6 +656,8 @@ class ArchiveApp:
         self.collection = None
         self.analysis_account, self.analysis_model, self.analysis_strategy = selected, slug, strategy
         audit, self.audit_next = self.audit_next, False
+        ocr_enabled, workers = self.ocr_enabled.get(), 2 if self.parallel.get() else 1
+        workflow = ENGINES[self.engine.get()]
         self.paper_tree.delete(*self.paper_tree.get_children())
         if self.restore_enabled:
             remember_folder(folder)
@@ -581,9 +665,10 @@ class ArchiveApp:
             store = ArchiveStore(folder)
             if strategy != STRATEGIES[0]:
                 store.set('draft_topics', [asdict(topic) for topic in topics])
-                store.set('draft_engine', 'llm' if mode == MODES[2] else 'local')
+                store.set('draft_engine', workflow)
             return self.with_client(mode, selected, slug, lambda client: prepare_archive(
-                folder, mode, strategy, topics, slug or '', client, self.report, self.cancel.is_set, audit))
+                folder, mode, strategy, topics, slug or '', client, self.report, self.cancel.is_set, audit,
+                ocr_enabled, workers, combine=True))
         self.start(job, self.prepared)
 
     def prepared(self, collection):
@@ -611,12 +696,18 @@ class ArchiveApp:
         self.topic_description.delete('1.0', 'end')
         self.topic_description.insert('1.0', topic.description)
         self.topic_keywords.set(', '.join(topic.keywords))
+        proposal = self.keyword_proposals.get(topic.name)
+        self.keyword_preview.set(('Vorschlag: ' + ', '.join(proposal['keywords']) + '\n' + proposal['reason'])
+                                 if proposal else 'Für dieses Thema liegt noch kein Keyword-Vorschlag vor.')
 
     def update_topic(self):
         selected = self.topic_tree.selection()
         if not selected or not self.topic_list():
             return
         topic = self.topic_list()[int(selected[0])]
+        old_name = topic.name
+        if old_name != self.topic_name.get().strip() or topic.description != self.topic_description.get('1.0', 'end').strip():
+            self.keyword_proposals.pop(old_name, None)
         topic.name = self.topic_name.get().strip()
         topic.description = self.topic_description.get('1.0', 'end').strip() or topic.name
         topic.keywords = tuple(dict.fromkeys(word.strip() for word in self.topic_keywords.get().split(',') if word.strip()))
@@ -650,9 +741,10 @@ class ArchiveApp:
         collection = self.collection
         definitions = deepcopy(collection.topics)
         correction_ids = list(self.pending_correction_ids)
+        workflow = ENGINES[self.engine.get()]
         def job():
             store = ArchiveStore(collection.folder)
-            store.save_profile(definitions, 'llm' if collection.mode == MODES[2] else 'local')
+            store.save_profile(definitions, 'llm' if collection.mode == MODES[2] else 'local', workflow)
             store.resolve_corrections(correction_ids)
             store.set('preferred_model', self.analysis_model or '')
             return self.with_client(collection.mode, self.analysis_account, self.analysis_model,

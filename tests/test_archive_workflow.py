@@ -83,13 +83,12 @@ class ArchiveWorkflowTests(unittest.TestCase):
             old.rename(new)
             self.assertEqual(existing_profile(new)['topics'][0]['name'], 'Methods')
 
-    def test_local_term_proposals_are_unselected_helpers(self):
+    def test_local_topic_proposals_are_removed(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             make_pdf(root / 'a.pdf')
-            collection = prepare_archive(root, MODES[0], STRATEGIES[2], [])
-            self.assertTrue(collection.topics)
-            self.assertTrue(all(not t.included for t in collection.topics))
+            with self.assertRaisesRegex(ValueError, 'Lokale Themenvorschläge entfallen'):
+                prepare_archive(root, MODES[0], STRATEGIES[2], [])
 
     def test_duplicates_in_input_and_existing_topics_are_not_analyzed_again(self):
         with tempfile.TemporaryDirectory() as temporary:

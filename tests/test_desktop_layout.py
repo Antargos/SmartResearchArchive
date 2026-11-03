@@ -184,6 +184,64 @@ class LayoutTests(unittest.TestCase):
             launch.assert_called_once_with(str(source))
             self.assertTrue(source.exists())
 
+    def test_only_full_llm_offers_automatic_topic_proposals(self):
+        from src.archive_workflow import STRATEGIES
+        root, app = self.make_app(96 / 72)
+        for engine in ('Lokal', 'Lokal mit LLM-Keywords'):
+            app.engine.set(engine)
+            self.assertNotIn(STRATEGIES[2], app.strategy_box.cget('values'))
+        app.engine.set('ChatGPT (LLM)')
+        self.assertIn(STRATEGIES[2], app.strategy_box.cget('values'))
+        app.strategy.set(STRATEGIES[2])
+        app.engine.set('Lokal')
+        self.assertEqual(app.strategy.get(), STRATEGIES[1])
+
+    def test_hybrid_keywords_need_explicit_adoption_and_rules_confirmation(self):
+        from pathlib import Path
+        import tempfile
+        from src.archive_store import ArchiveStore
+        from src.desktop_service import MODES
+        from test_archive import make_pdf
+        from test_processing import Reply
+        root, app = self.make_app(96 / 72)
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            make_pdf(folder / 'a.pdf')
+            app.folder.set(str(folder))
+            app.edit_rules()
+            app.engine.set('Lokal mit LLM-Keywords')
+            app.add_topic()
+            root.update()
+            app.topic_name.set('Methods')
+            app.topic_description.delete('1.0', 'end')
+            app.topic_description.insert('1.0', 'Digital history research methods')
+            app.update_topic()
+            app.account_id = 'synthetic'
+            app.models = [{'slug': 'mock', 'display_name': 'Mock'}]
+            app.model_box.configure(values=['Mock'])
+            app.model.set('Mock')
+            app.external.set(True)
+            model = Reply({'topics': [{'name': 'Methods', 'keywords': ['digital history', 'text mining',
+                        'historical research', 'digital humanities', 'archival methods'], 'reason': 'Draft'}]})
+            def run_now(job, done):
+                done(job())
+            def with_client(mode, selected, slug, function):
+                return function(model if mode == MODES[2] else None)
+            with patch.object(app, 'start', side_effect=run_now), patch.object(app, 'with_client', side_effect=with_client):
+                app.generate_keyword_rules()
+                self.assertFalse(app.draft_topics[0].keywords)
+                self.assertIsNone(ArchiveStore(folder).profile())
+                app.apply_keyword_rules()
+                self.assertIn('digital history', app.draft_topics[0].keywords)
+                self.assertIsNone(ArchiveStore(folder).profile())
+                app.analyze()
+                root.update()
+                app.classify()
+            self.assertTrue(app.ready)
+            self.assertEqual(app.collection.papers[0].topic, 'Methods')
+            self.assertEqual(len(model.calls), 1)
+            self.assertEqual(ArchiveStore(folder).profile()['workflow'], 'hybrid')
+
 
 if __name__ == '__main__':
     unittest.main()
