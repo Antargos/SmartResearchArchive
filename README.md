@@ -1,6 +1,6 @@
 # Smart Research Archive
 
-## Windows desktop version 1.0.0
+## Windows desktop version 1.0.1
 
 Branch **`release/windows-desktop-v1`** combines the local classifier, collection
 topic suggestions and ChatGPT semantic analysis in a native German desktop UI.
@@ -9,7 +9,7 @@ candidate from [Releases](https://github.com/Antargos/SmartResearchArchive/relea
 The Windows build creates downloads only after automated tests, packaged GUI startup,
 installation and uninstallation checks succeed.
 
-1. Install `SmartResearchArchive-1.0.0-Setup.exe` and start the app from the Start menu.
+1. Install `SmartResearchArchive-1.0.1-Setup.exe` and start the app from the Start menu.
 2. Select the folder containing your PDFs, e.g. Downloads.
 3. Choose a local analysis mode or connect ChatGPT in your browser and choose a model.
 4. Review/edit up to five topics, then review every PDF's metadata and destination.

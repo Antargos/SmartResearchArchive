@@ -1,6 +1,11 @@
-# Smart Research Archive 1.0.0 — Windows desktop candidate
+# Smart Research Archive 1.0.1 — Windows desktop candidate
 
-Download **SmartResearchArchive-1.0.0-Setup.exe** and follow the installer.
+Fix for hidden analysis buttons on smaller displays and larger Windows text scaling:
+the form now scrolls, while the main action buttons remain in fixed bars. Layout
+checks cover 720×480, 800×500 and 1100×780 windows at 100%, 150% and 200% scaling.
+Close the previous app and run this installer to update your existing installation.
+
+Download **SmartResearchArchive-1.0.1-Setup.exe** and follow the installer.
 Alternatively extract the portable ZIP and run SmartResearchArchive.exe, keeping
 the _internal folder beside it. Python does not need to be installed.
 

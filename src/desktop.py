@@ -14,16 +14,19 @@ from .chatgpt_client import ChatGPTClient
 from .desktop_service import (MODES, Cancelled, Topic, approved_mapping, archive_paper,
                               assign, prepare, skip_paper)
 from .files import destination
+from .scrollable import ScrollableFrame
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 
 class ArchiveApp:
     def __init__(self, root, restore=True):
         self.root = root
         self.root.title(f'Smart Research Archive {VERSION}')
-        self.root.geometry('1200x850')
-        self.root.minsize(980, 720)
+        width = min(1100, max(720, self.root.winfo_screenwidth() - 80))
+        height = min(780, max(480, self.root.winfo_screenheight() - 120))
+        self.root.geometry(f'{width}x{height}')
+        self.root.minsize(720, 480)
         self.events = queue.Queue()
         self.cancel = threading.Event()
         self.busy = False
@@ -69,13 +72,15 @@ class ArchiveApp:
         style.configure('Title.TLabel', font=('Segoe UI', 23, 'bold'), foreground='#17395c')
         style.configure('Heading.TLabel', font=('Segoe UI', 14, 'bold'))
         style.configure('Treeview', rowheight=30)
-        body = ttk.Frame(self.root, padding=22)
+        body = ttk.Frame(self.root, padding=14)
         body.pack(fill='both', expand=True)
-        ttk.Label(body, text='Smart Research Archive', style='Title.TLabel').pack(anchor='w')
-        ttk.Label(body, text='Deine PDFs verstehen, prüfen und geordnet wiederfinden.').pack(anchor='w', pady=(3, 16))
+        body.columnconfigure(0, weight=1)
+        body.rowconfigure(2, weight=1)
+        ttk.Label(body, text='Smart Research Archive', style='Title.TLabel').grid(row=0, column=0, sticky='w')
+        ttk.Label(body, text='Deine PDFs verstehen, prüfen und geordnet wiederfinden.').grid(row=1, column=0, sticky='w', pady=(3, 8))
         self.tabs = ttk.Notebook(body)
-        self.tabs.pack(fill='both', expand=True)
-        self.setup, self.topic_page, self.paper_page, self.log_page = [ttk.Frame(self.tabs, padding=18) for _ in range(4)]
+        self.tabs.grid(row=2, column=0, sticky='nsew')
+        self.setup, self.topic_page, self.paper_page, self.log_page = [ttk.Frame(self.tabs, padding=10) for _ in range(4)]
         for page, label in zip((self.setup, self.topic_page, self.paper_page, self.log_page),
                                ('1  Ordner & Analyse', '2  Themen prüfen', '3  PDFs bestätigen', 'Verlauf')):
             self.tabs.add(page, text=label)
@@ -85,15 +90,25 @@ class ArchiveApp:
         self.log = ScrolledText(self.log_page, height=18, wrap='word', font=('Segoe UI', 10), state='disabled')
         self.log.pack(fill='both', expand=True)
         footer = ttk.Frame(body)
-        footer.pack(fill='x', pady=(12, 0))
-        ttk.Label(footer, textvariable=self.status, wraplength=840).pack(side='left')
+        footer.grid(row=3, column=0, sticky='ew', pady=(8, 0))
+        footer.columnconfigure(0, weight=1)
+        status_label = ttk.Label(footer, textvariable=self.status, wraplength=560)
+        status_label.grid(row=0, column=0, sticky='ew')
+        footer.bind('<Configure>', lambda event: status_label.configure(wraplength=max(200, event.width - 140)))
         self.stop_button = ttk.Button(footer, text='Abbrechen', command=self.stop, state='disabled')
-        self.stop_button.pack(side='right')
+        self.stop_button.grid(row=0, column=1, padx=(10, 0))
         self.progress = ttk.Progressbar(body, mode='indeterminate')
-        self.progress.pack(fill='x', pady=(8, 0))
+        self.progress.grid(row=4, column=0, sticky='ew', pady=(6, 0))
 
     def build_setup(self):
-        page = self.setup
+        # Reserve the bottom action bar before allocating scrollable form space.
+        actions = ttk.Frame(self.setup)
+        actions.pack(side='bottom', fill='x', pady=(8, 0))
+        self.analyze_button = self.button(actions, 'PDFs analysieren', self.analyze)
+        self.analyze_button.pack(side='right')
+        self.setup_scroll = ScrollableFrame(self.setup)
+        self.setup_scroll.pack(fill='both', expand=True)
+        page = self.setup_scroll.content
         ttk.Label(page, text='Welchen Ordner möchtest du sortieren?', style='Heading.TLabel').pack(anchor='w')
         row = ttk.Frame(page)
         row.pack(fill='x', pady=12)
@@ -101,58 +116,72 @@ class ArchiveApp:
         self.button(row, 'Ordner auswählen …', self.choose_folder).pack(side='left', padx=(10, 0))
         ttk.Label(page, text='Nur PDFs direkt in diesem Ordner werden eingelesen. Unterordner bleiben unberührt.\n'
                   'Bestätigte Dateien werden in Themen-Unterordner desselben Ordners verschoben. Bitte Backups behalten.',
-                  wraplength=1000).pack(anchor='w')
+                  wraplength=600).pack(anchor='w')
         ttk.Label(page, text='Analyseart', style='Heading.TLabel').pack(anchor='w', pady=(22, 8))
         self.control(ttk.Combobox(page, textvariable=self.mode, values=MODES, state='readonly', width=45),
                      'readonly').pack(anchor='w')
         ttk.Label(page, text='Lokal: nachvollziehbare Keyword-Regeln. ChatGPT: inhaltliche Zusammenfassungen und begründete Themen.',
-                  wraplength=1000).pack(anchor='w', pady=(8, 16))
+                  wraplength=600).pack(anchor='w', pady=(8, 16))
         connection = ttk.LabelFrame(page, text='ChatGPT-Verbindung', padding=14)
         connection.pack(fill='x')
         ttk.Label(connection, text='Konto / Workspace').grid(row=0, column=0, sticky='w')
         self.account_box = self.control(ttk.Combobox(connection, textvariable=self.account, state='readonly', width=42), 'readonly')
-        self.account_box.grid(row=1, column=0, sticky='ew', pady=6)
+        self.account_box.grid(row=1, column=0, columnspan=3, sticky='ew', pady=6)
         self.account_box.bind('<<ComboboxSelected>>', self.account_changed)
-        self.button(connection, 'Mit ChatGPT verbinden', self.login).grid(row=1, column=1, padx=10)
-        self.button(connection, 'Abmelden', self.logout).grid(row=1, column=2)
-        ttk.Label(connection, text='Modell').grid(row=2, column=0, sticky='w', pady=(8, 0))
+        self.button(connection, 'Mit ChatGPT verbinden', self.login).grid(row=2, column=0, sticky='w')
+        self.button(connection, 'Abmelden', self.logout).grid(row=2, column=1, padx=10)
+        ttk.Label(connection, text='Modell').grid(row=3, column=0, sticky='w', pady=(8, 0))
         self.model_box = self.control(ttk.Combobox(connection, textvariable=self.model, state='readonly', width=42), 'readonly')
-        self.model_box.grid(row=3, column=0, sticky='ew', pady=6)
-        self.button(connection, 'Modelle laden', self.fetch_models).grid(row=3, column=1, padx=10)
-        ttk.Button(connection, text='Nutzung verwalten', command=lambda: webbrowser.open('https://chatgpt.com/#settings/Usage')).grid(row=3, column=2)
+        self.model_box.grid(row=4, column=0, columnspan=3, sticky='ew', pady=6)
+        self.button(connection, 'Modelle laden', self.fetch_models).grid(row=5, column=0, sticky='w')
+        ttk.Button(connection, text='Nutzung verwalten', command=lambda: webbrowser.open('https://chatgpt.com/#settings/Usage')).grid(row=5, column=1, padx=10)
         connection.columnconfigure(0, weight=1)
         self.control(ttk.Checkbutton(page, variable=self.external,
-                     text='Für ChatGPT: Ich stimme zu, PDF-Texte und Zusammenfassungen an OpenAI zu übermitteln.')).pack(anchor='w', pady=(16, 5))
+                     text='Externe Verarbeitung mit ChatGPT erlauben')).pack(anchor='w', pady=(16, 5))
+        ttk.Label(page, text='Mit diesem Häkchen stimmst du zu, PDF-Texte und Zusammenfassungen an OpenAI zu übermitteln.',
+                  wraplength=600).pack(anchor='w', pady=(0, 5))
         ttk.Label(page, text='ChatGPT verwendet deine freigegebenen Abo-Limits. Kein API-Schlüssel und kein automatischer Wechsel zu kostenpflichtiger API-Nutzung.',
-                  wraplength=1000).pack(anchor='w')
-        self.button(page, 'PDFs analysieren', self.analyze).pack(anchor='e', pady=(20, 0))
+                  wraplength=600).pack(anchor='w')
 
     def build_topics(self):
-        ttk.Label(self.topic_page, text='Themen auswählen und anpassen', style='Heading.TLabel').pack(anchor='w')
-        ttk.Label(self.topic_page, text='Bis zu fünf Themen. Die lokale Analyse nutzt Keywords; ChatGPT nutzt die Themenbeschreibung.').pack(anchor='w', pady=(5, 12))
-        self.topic_tree = ttk.Treeview(self.topic_page, columns=('name', 'included', 'evidence'), show='headings', height=7)
+        row = ttk.Frame(self.topic_page)
+        row.pack(side='bottom', fill='x', pady=(8, 0))
+        row.columnconfigure(1, weight=1)
+        self.classify_button = self.button(row, 'Themen bestätigen & zuordnen', self.classify)
+        self.classify_button.grid(row=0, column=0, columnspan=2, sticky='e', pady=(0, 6))
+        self.button(row, 'Änderungen übernehmen', self.update_topic).grid(row=1, column=0, sticky='w')
+        self.button(row, 'Neues Thema', self.add_topic).grid(row=1, column=1, sticky='w', padx=8)
+        self.topics_scroll = ScrollableFrame(self.topic_page)
+        self.topics_scroll.pack(fill='both', expand=True)
+        page = self.topics_scroll.content
+        ttk.Label(page, text='Themen auswählen und anpassen', style='Heading.TLabel').pack(anchor='w')
+        ttk.Label(page, text='Bis zu fünf Themen. Die lokale Analyse nutzt Keywords; ChatGPT nutzt die Themenbeschreibung.', wraplength=600).pack(anchor='w', pady=(5, 12))
+        self.topic_tree = ttk.Treeview(page, columns=('name', 'included', 'evidence'), show='headings', height=7)
         for column, label, width in (('name', 'Thema', 300), ('included', 'Verwenden', 100), ('evidence', 'Zugehörige PDFs', 500)):
             self.topic_tree.heading(column, text=label)
             self.topic_tree.column(column, width=width)
         self.topic_tree.pack(fill='both', expand=True)
         self.topic_tree.bind('<<TreeviewSelect>>', self.topic_selected)
-        row = ttk.Frame(self.topic_page)
+        row = ttk.Frame(page)
         row.pack(fill='x', pady=12)
         ttk.Label(row, text='Themenname').pack(side='left')
         self.control(ttk.Entry(row, textvariable=self.topic_name, width=42)).pack(side='left', padx=12)
         self.control(ttk.Checkbutton(row, text='Dieses Thema verwenden', variable=self.topic_included)).pack(side='left')
-        ttk.Label(self.topic_page, text='Beschreibung / Keywords (kommagetrennt für lokale Analyse)').pack(anchor='w')
-        self.topic_description = self.control(ScrolledText(self.topic_page, height=4, wrap='word', font=('Segoe UI', 10)))
+        ttk.Label(page, text='Beschreibung / Keywords (kommagetrennt für lokale Analyse)').pack(anchor='w')
+        self.topic_description = self.control(ScrolledText(page, height=4, wrap='word', font=('Segoe UI', 10)))
         self.topic_description.pack(fill='x', pady=6)
-        row = ttk.Frame(self.topic_page)
-        row.pack(fill='x', pady=8)
-        self.button(row, 'Änderungen am Thema übernehmen', self.update_topic).pack(side='left')
-        self.button(row, 'Neues Thema', self.add_topic).pack(side='left', padx=10)
-        self.button(row, 'Themen bestätigen & PDFs zuordnen', self.classify).pack(side='right')
 
     def build_papers(self):
-        ttk.Label(self.paper_page, text='Jede Datei bleibt bis zu deiner Bestätigung unverändert.', style='Heading.TLabel').pack(anchor='w')
-        panes = ttk.Panedwindow(self.paper_page, orient='horizontal')
+        actions = ttk.Frame(self.paper_page)
+        actions.pack(side='bottom', fill='x', pady=(8, 0))
+        self.button(actions, 'Überspringen', self.skip).pack(side='left')
+        self.accept_button = self.button(actions, 'Bestätigen & einsortieren', self.accept)
+        self.accept_button.pack(side='right')
+        self.papers_scroll = ScrollableFrame(self.paper_page)
+        self.papers_scroll.pack(fill='both', expand=True)
+        page = self.papers_scroll.content
+        ttk.Label(page, text='Jede Datei bleibt bis zu deiner Bestätigung unverändert.', style='Heading.TLabel', wraplength=700).pack(anchor='w')
+        panes = ttk.Panedwindow(page, orient='horizontal')
         panes.pack(fill='both', expand=True, pady=(12, 0))
         left, right = ttk.Frame(panes), ttk.Frame(panes, padding=(16, 0, 0, 0))
         panes.add(left, weight=1)
@@ -179,10 +208,6 @@ class ArchiveApp:
         ttk.Label(right, text='Begründung, Zusammenfassung und geprüfte Textstellen').pack(anchor='w')
         self.details = ScrolledText(right, height=10, wrap='word', font=('Segoe UI', 10), state='disabled')
         self.details.pack(fill='both', expand=True, pady=6)
-        row = ttk.Frame(right)
-        row.pack(fill='x', pady=(8, 0))
-        self.button(row, 'Überspringen', self.skip).pack(side='left')
-        self.button(row, 'Bestätigen & einsortieren', self.accept).pack(side='right')
 
     def append_log(self, text):
         self.log.configure(state='normal')

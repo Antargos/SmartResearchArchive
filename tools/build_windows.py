@@ -69,19 +69,19 @@ def main():
     run(str(compiler), str(ROOT / 'packaging' / 'setup.iss'))
     # Test installation in an isolated build-folder destination, not the user's app.
     installed = ROOT / 'build' / 'installed-smoke'
-    setup = ARTIFACTS / 'SmartResearchArchive-1.0.0-Setup.exe'
+    setup = ARTIFACTS / 'SmartResearchArchive-1.0.1-Setup.exe'
     run(str(setup), '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', '/TASKS=',
         '/DIR=' + str(installed), '/LOG=' + str(ARTIFACTS / 'installer-test.log'))
     run(str(installed / 'SmartResearchArchive.exe'), '--self-test')
     run(str(installed / 'SmartResearchArchive.exe'), '--smoke-test', '--report', str(ARTIFACTS / 'installed-smoke-test.json'))
     run(str(installed / 'unins000.exe'), '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
-    archive = shutil.make_archive(str(ARTIFACTS / 'SmartResearchArchive-1.0.0-Portable'), 'zip',
+    archive = shutil.make_archive(str(ARTIFACTS / 'SmartResearchArchive-1.0.1-Portable'), 'zip',
                                   root_dir=ROOT / 'dist', base_dir='SmartResearchArchive')
     files = [setup, Path(archive)]
     checksum_lines = [hashlib.sha256(path.read_bytes()).hexdigest() + '  ' + path.name for path in files]
     (ARTIFACTS / 'SHA256SUMS.txt').write_text('\n'.join(checksum_lines) + '\n', encoding='utf-8')
     (ARTIFACTS / 'build-info.json').write_text(json.dumps(dict(
-        version='1.0.0', source_commit=os.environ.get('GITHUB_SHA', 'local'), python=sys.version,
+        version='1.0.1', source_commit=os.environ.get('GITHUB_SHA', 'local'), python=sys.version,
         pyinstaller=importlib.metadata.version('pyinstaller'), packaged_gui_test=True,
         install_uninstall_test=True, live_chatgpt_test=False), indent=2), encoding='utf-8')
 

@@ -32,6 +32,10 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Check source GUI startup
         run: python desktop_app.py --smoke-test
+      - name: Check small-window and display-scaling layouts
+        env:
+          SRA_GUI_TESTS: '1'
+        run: python -m unittest discover -s tests -p test_desktop_layout.py -v
       - name: Capture desktop pages with synthetic data
         run: python tools/preview_gui.py
       - name: Ensure installer compiler
@@ -46,7 +50,7 @@ jobs:
       - name: Save downloadable build files
         uses: actions/upload-artifact@v4
         with:
-          name: SmartResearchArchive-Windows-1.0.0
+          name: SmartResearchArchive-Windows-1.0.1
           path: artifacts/
           if-no-files-found: error
           retention-days: 30
@@ -56,6 +60,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $releaseTag = 'desktop-v1.0.0-build.${{ github.run_number }}'
-          gh release create $releaseTag artifacts/SmartResearchArchive-1.0.0-Setup.exe artifacts/SmartResearchArchive-1.0.0-Portable.zip artifacts/SHA256SUMS.txt artifacts/build-info.json --target '${{ github.sha }}' --title 'Smart Research Archive 1.0.0 — Windows' --prerelease --notes-file packaging/release-notes.md
+          $releaseTag = 'desktop-v1.0.1-build.${{ github.run_number }}'
+          gh release create $releaseTag artifacts/SmartResearchArchive-1.0.1-Setup.exe artifacts/SmartResearchArchive-1.0.1-Portable.zip artifacts/SHA256SUMS.txt artifacts/build-info.json --target '${{ github.sha }}' --title 'Smart Research Archive 1.0.1 — Windows' --prerelease --notes-file packaging/release-notes.md
           if ($LASTEXITCODE -ne 0) { throw 'Release upload failed' }

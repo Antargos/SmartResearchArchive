@@ -172,3 +172,22 @@ Release: https://github.com/Antargos/SmartResearchArchive/releases/tag/desktop-v
 The published EXE is unsigned. Real ChatGPT authorization, model quality, manual
 usability testing and scholarly evaluation remain tasks for the owner. The build
 does not authenticate as the user or send actual research PDFs to OpenAI.
+
+## 3 November 2026 — Keep desktop actions reachable
+
+User reported that PDFs analysieren was invisible even with the window maximized.
+The form and notebook requested more height than available, and pack allocated the
+bottom action after the form. Maximizing did not solve this at larger display scaling.
+
+Use a weighted grid for the main notebook and reserve footer space. Add scrollable
+page viewports and keep analysis, topic confirmation and per-file confirmation in
+fixed action bars outside those viewports. Stack connection controls, shorten the
+form's text wrapping, and allow 720×480 windows. Mouse-wheel handling is scoped to
+the relevant page and preserves scrolling inside text/list widgets.
+
+Version 1.0.1 adds real Windows Tk geometry checks at 100%, 150% and 200% scaling,
+with 720×480, 800×500 and 1100×780 client windows. Checks require primary buttons
+and cancel to fit inside every ancestor's visible bounds and verify that scrolling
+the form does not move the analysis button. Build/installer checks remain enabled.
+Codex drafted the fix and regression checks. CI results will determine release status;
+this entry does not claim the user's display has already been tested personally.

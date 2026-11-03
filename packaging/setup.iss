@@ -2,7 +2,7 @@
 [Setup]
 AppId={{8EA479A2-C80C-4E44-B3DC-6D412E7A704D}
 AppName=Smart Research Archive
-AppVersion=1.0.0
+AppVersion=1.0.1
 AppPublisher=Antargos
 AppSupportURL=https://github.com/Antargos/SmartResearchArchive/issues
 DefaultDirName={localappdata}\Programs\SmartResearchArchive
@@ -12,7 +12,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
 OutputDir=..\artifacts
-OutputBaseFilename=SmartResearchArchive-1.0.0-Setup
+OutputBaseFilename=SmartResearchArchive-1.0.1-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

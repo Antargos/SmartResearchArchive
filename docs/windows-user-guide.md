@@ -3,7 +3,7 @@
 ## Installieren
 
 Lade auf der [GitHub-Release-Seite](https://github.com/Antargos/SmartResearchArchive/releases)
-die Datei **SmartResearchArchive-1.0.0-Setup.exe** aus dem neuesten Desktop-Build herunter.
+die Datei **SmartResearchArchive-1.0.1-Setup.exe** aus dem neuesten Desktop-Build herunter.
 Starte sie und folge dem Assistenten. Die Installation erfolgt für dein Windows-Konto,
 ohne Administratorrechte. Danach findest du die App im Startmenü. Python muss nicht
 separat installiert werden. Unterstützt: Windows 10/11, 64 Bit.
@@ -16,6 +16,12 @@ Die App ist nicht digital signiert; Windows kann einen unbekannten Herausgeber
 anzeigen. Vergleiche im Zweifel den Download mit den veröffentlichten SHA256-Prüfsummen.
 
 ## 1. Ordner und Analyse wählen
+
+Ab Version 1.0.1 bleibt **PDFs analysieren** in einer festen Leiste unter dem
+Formular sichtbar. Die Inhalte darüber lassen sich über die rechte Scrollleiste
+oder das Mausrad erreichen. Bei sehr schmalen Fenstern gibt es zusätzlich eine
+waagerechte Scrollleiste. Auch Themenbestätigung und Einsortieren haben feste
+Aktionsleisten. Die App lässt sich bis auf 720 × 480 Pixel verkleinern.
 
 Mit **Ordner auswählen** öffnest du beispielsweise Downloads oder einen eigenen
 Literaturordner. Eingelesen werden ausschließlich PDFs direkt darin. Vorhandene
@@ -113,7 +119,7 @@ Nach einem Absturz: Nur wenn keine App-Instanz mehr läuft, den leeren Unterordn
 
 ## Status
 
-Version 1.0.0 ist ein Desktop-Release-Kandidat für das Kursprojekt. Automatisierte
+Version 1.0.1 ist ein Desktop-Release-Kandidat für das Kursprojekt. Automatisierte
 Tests sowie EXE-/Installationschecks sind Bestandteil des Builds; ein persönlicher
 Live-Test mit ChatGPT und deiner PDF-Sammlung bleibt erforderlich.
 All rights reserved. Drittanbieter-Komponenten behalten ihre eigenen Lizenzen.
