@@ -164,6 +164,8 @@ def review_topic_fit(client, documents, topics):
         result = client.json_result(RULES +
             'Review whether these user-defined research topics fit the document summaries. '
             'Respect an intentionally narrow research focus. Never replace or rename a user topic. '
+            'Assess the supplied keywords as well as descriptions. In the review, suggest concrete '
+            'alternative or additional keywords for weak rules and explain why, for human review. '
             'Explain weak coverage and missing content with the supplied document IDs. '
             'Only propose genuinely needed NEW topic additions, or an empty topics array. '
             'Names: safe folder labels, max 60 characters. Return '

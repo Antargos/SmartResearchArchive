@@ -266,3 +266,52 @@ Published `desktop-v1.0.3-build.5`, validated code
 https://github.com/Antargos/SmartResearchArchive/releases/tag/desktop-v1.0.3-build.5
 No real PDFs or user tokens were used in the build. The specific Jones document
 remains untested; unsupported evidence still results in manual review, not acceptance.
+
+## 3 November 2026 — Persistent archive workflow, version 2
+
+The user approved implementing the previously discussed workflow and additional
+ideas. Work is isolated on feature/archive-workflow-v2; the previous desktop branch
+is retained. Codex drafted this implementation and tests with AI assistance.
+
+The interface now asks local versus LLM first, then own topics/keywords versus
+proposals. Own rules can be entered before reading PDFs. ChatGPT assesses topic
+descriptions and keywords, explains weak coverage and can suggest alternatives;
+additional topics remain unselected until accepted. User rules are never replaced
+by model output. Local proposals are explicitly unselected term helpers from titles
+and text beginnings, not an automatic scholarly taxonomy.
+
+A per-root SQLite file stores approved topics, descriptions, keywords, engine,
+analysis checkpoints, decisions, hashes and write-ahead move history. It stores
+relative paths and moves with the archive folder. ChatGPT credentials stay in the
+separate protected user store. The archive data includes extracted text and model
+summaries and is not encrypted; documentation explains backup and sharing.
+
+Reopening a configured root defaults to saved rules for newly downloaded top-level
+PDFs. Importing existing subfolders creates an unconfirmed draft. Normal runs do
+not reanalyze existing topic folders. A separate explicit audit includes direct
+PDFs in managed topic folders and Unclassified; each new move still needs review.
+
+Metadata recognizes numbered and canonical author/year/title filenames, keeps source
+hints and reports embedded/file conflicts. Exact-content duplicates are detected
+before extraction/model calls and left in place. Successful model sections,
+summaries and assignments are checkpointed individually; restarts reuse matching
+work, rule changes invalidate assignments, model/content changes invalidate their
+analysis cache. A cache-clear action preserves profiles, decisions and move history.
+
+PDF opening, persistent skip/defer and explicit reopen support review. Undo checks
+the archived hash and vacant original path before returning the last moved file;
+it also works after restart. Repeated manual corrections on distinct PDF contents
+can supply optional keyword drafts; those require another rule confirmation.
+No implicit ML training, embeddings, CSV, OCR, copyrighted PDFs or LICENSE file.
+
+### Validation in progress
+
+The first Windows run passed all 69 non-GUI cases and source startup. Eight dedicated
+Tk checks found a missing Collection import in draft validation and a canvas refresh
+issue when displaying the LLM settings; both were corrected. Window geometry checks
+already passed at 720x480, 800x500 and 1100x780, at 100/150/200 percent scaling.
+The final Windows build and installer checks will be recorded after completion.
+Local full PDF tests are restricted by temp/path access in the execution environment;
+the unrestricted Windows CI runner is used for authoritative filesystem/GUI checks.
+All model responses and accounts in tests are simulated; live sign-in and actual
+historical classification quality are not claimed as tested.

@@ -1,160 +1,200 @@
 # Smart Research Archive — Windows-Anleitung
 
-## Installieren
+## Installieren und aktualisieren
 
-Lade auf der [GitHub-Release-Seite](https://github.com/Antargos/SmartResearchArchive/releases)
-die Datei **SmartResearchArchive-1.0.3-Setup.exe** aus dem neuesten Desktop-Build herunter.
-Starte sie und folge dem Assistenten. Die Installation erfolgt für dein Windows-Konto,
-ohne Administratorrechte. Danach findest du die App im Startmenü. Python muss nicht
-separat installiert werden. Unterstützt: Windows 10/11, 64 Bit.
+Auf der [Release-Seite](https://github.com/Antargos/SmartResearchArchive/releases)
+**SmartResearchArchive-2.0.0-Setup.exe** herunterladen. Eine laufende ältere App
+schließen, dann installieren. Der Assistent installiert für dein Windows-Konto
+ohne Administratorrechte. Danach die App über das Startmenü starten.
+Windows 10/11, 64 Bit; Python ist im Download enthalten.
 
-Alternativ: Portable ZIP vollständig entpacken und SmartResearchArchive.exe starten.
-Der Ordner `_internal` muss neben der EXE bleiben. Einzelnes Herausziehen nur der
-EXE funktioniert nicht. Die Downloads enthalten keine wissenschaftlichen PDFs.
+Alternativ die portable ZIP vollständig entpacken und SmartResearchArchive.exe
+starten. Der Ordner `_internal` muss neben der EXE bleiben.
+Der Installer ist nicht digital signiert. SHA256-Prüfsummen stehen beim Release.
+Die Downloads enthalten keine wissenschaftlichen PDFs.
 
-Die App ist nicht digital signiert; Windows kann einen unbekannten Herausgeber
-anzeigen. Vergleiche im Zweifel den Download mit den veröffentlichten SHA256-Prüfsummen.
+## 1. Analyseart und Ordner wählen
 
-## 1. Ordner und Analyse wählen
+Zuerst **Lokal** oder **ChatGPT (LLM)** auswählen. Lokal bleibt der Dokumenttext auf
+deinem Rechner; die Zuordnung zählt nachvollziehbare Keyword-Treffer.
+ChatGPT wertet Textabschnitte inhaltlich aus und begründet seine Vorschläge.
 
-Ab Version 1.0.1 bleibt **PDFs analysieren** in einer festen Leiste unter dem
-Formular sichtbar. Die Inhalte darüber lassen sich über die rechte Scrollleiste
-oder das Mausrad erreichen. Bei sehr schmalen Fenstern gibt es zusätzlich eine
-waagerechte Scrollleiste. Auch Themenbestätigung und Einsortieren haben feste
-Aktionsleisten. Die App lässt sich bis auf 720 × 480 Pixel verkleinern.
+Danach wählen, woher die Themen kommen:
 
-Mit **Ordner auswählen** öffnest du beispielsweise Downloads oder einen eigenen
-Literaturordner. Eingelesen werden ausschließlich PDFs direkt darin. Vorhandene
-Unterordner und deren Dateien werden nicht durchsucht.
+- **Eigene Themen:** über **Themen / Keywords festlegen oder bearbeiten** Namen,
+  Beschreibungen und Keywords eingeben. Das geht vor der ersten PDF-Analyse.
+- **Themen vorschlagen:** ChatGPT schlägt inhaltliche Kategorien vor. Lokal entstehen
+  lediglich ungeprüfte Begriffshilfen aus Titeln und Textanfängen. Diese sind nicht
+  vorausgewählt; wiederkehrende Wörter sind noch keine sinnvolle Forschungssystematik.
+- **Vorhandene Unterordner übernehmen:** über den Bearbeiten-Button vorhandene
+  Ordnernamen als unbestätigten Entwurf laden, Beschreibung/Keywords ergänzen und
+  bewusst auswählen. Unterordner werden dabei nicht inhaltlich analysiert.
+- **Archivregeln verwenden:** für einen bereits eingerichteten Archivordner. Diese
+  Auswahl wird automatisch geladen; die Themen müssen nicht erneut eingegeben werden.
 
-Analysearten:
+Mit **Ordner auswählen …** beispielsweise Downloads oder einen eigenen
+Literaturordner wählen. Normalerweise werden ausschließlich PDFs direkt darin
+eingelesen. Bestätigte Dateien landen in Themen-Unterordnern desselben Ordners.
+Vor dem ersten Einsortieren Sicherungskopien behalten.
 
-- **Feste Themen:** fünf vordefinierte Kategorien, transparente Keyword-Punkte.
-- **Themen aus Begriffen:** wiederkehrende Wörter/Wortpaare aus deiner Sammlung.
-- **ChatGPT:** inhaltliche Zusammenfassungen, gemeinsame Themen und begründete Zuordnung.
-
-Die ersten beiden Modi sind lokal und brauchen keinen KI-Zugang. Vor dem ersten
-Einsortieren solltest du Backup-Kopien behalten. Akzeptieren verschiebt Originaldateien.
+**PDFs analysieren** bleibt unten in einer festen Leiste sichtbar. Formulare
+lassen sich senkrecht und bei Bedarf waagerecht scrollen. Themenbestätigung und
+Einsortieren haben ebenfalls feste Aktionsleisten.
 
 ## 2. ChatGPT verbinden (optional)
 
-Wähle eine gespeicherte Verbindung oder **Neues Konto / Workspace** und klicke auf
-**Mit ChatGPT verbinden**. Die App öffnet deinen Browser. Melde dich an und erlaube
-die Nutzung deines ChatGPT-Abos. Eine Anmeldung allein reicht nicht; die Berechtigung
-muss tatsächlich erteilt werden. Die App prüft sie und bietet die für dein Konto
-verfügbaren Modelle an. **Modelle laden** aktualisiert die Auswahl für ein gespeichertes
-Konto. **Nutzung verwalten** öffnet die Einstellungen in ChatGPT.
+Im LLM-Modus eine gespeicherte Verbindung auswählen oder **Mit ChatGPT verbinden**
+anklicken. Im Browser anmelden und die Nutzung des ChatGPT-Abos erlauben.
+Danach ein verfügbares Modell wählen und **Externe Verarbeitung mit ChatGPT erlauben**
+aktivieren. **Modelle laden** aktualisiert die Auswahl; **Nutzung verwalten** öffnet
+die ChatGPT-Einstellungen.
 
-Bestätige das Kontrollkästchen zur externen Verarbeitung. Nur bei gewählter
-ChatGPT-Analyse werden PDF-Texte und Zusammenfassungen an OpenAI gesendet.
-Original-PDFs werden nicht als Dateien hochgeladen; Dateinamen werden beim Modell
-durch interne IDs ersetzt. Es ist kein API-Schlüssel nötig und es gibt keinen
-automatischen Wechsel zu separat bezahlter API-Nutzung.
+Die App sendet extrahierte PDF-Texte und Zusammenfassungen an OpenAI. PDF-Dateien
+werden nicht als Originaldateien hochgeladen; im Modellkontext stehen interne IDs.
+Es wird kein API-Schlüssel benötigt. Die Verfügbarkeit von Konto, Workspace,
+Modellen und Abo-Limits bestimmt OpenAI. Den Live-Zugang mit dem eigenen Konto prüfen.
 
-OpenAI entscheidet über die tatsächliche Freigabe deiner Anmeldung, deines
-Workspaces und der Modelle. App-Anfragen zählen zu deinen bestehenden Abo-Limits.
-Der Live-Zugang und die inhaltliche Qualität müssen mit deinem Konto geprüft werden.
+**Abmelden** versucht den Sitzungswiderruf und entfernt lokale Sitzungstoken, behält
+den Verbindungseintrag aber zur späteren Anmeldung.
+**Verbindung löschen** entfernt nach Rückfrage zusätzlich die lokale Registrierung.
+Andere Verbindungen bleiben erhalten. Nicht bestätigter Remote-Widerruf wird angezeigt;
+eine verbleibende App-Freigabe gegebenenfalls in den ChatGPT-Einstellungen trennen.
 
-## 3. Analysieren und Themen prüfen
+## 3. Analysieren und Regeln bestätigen
 
-**PDFs analysieren** verändert noch keine Datei. Fortschritt und Probleme erscheinen
-unten und im Verlauf. Beschädigte/verschlüsselte PDFs werden als nicht lesbar gemeldet.
-Bildscans ohne Textlayer benötigen OCR; diese Version enthält keine OCR.
+**PDFs analysieren** erzeugt eine Vorschau und verschiebt noch keine Datei.
+Fortschritt und Hinweise stehen unten und unter **Verlauf**.
 
-Im zweiten Reiter wählst du ein Thema, änderst den Namen und die Beschreibung bzw.
-Keywords und setzt **Dieses Thema verwenden**. Danach **Änderungen am Thema übernehmen**.
-**Neues Thema** erlaubt eine eigene Kategorie. Es dürfen höchstens fünf Themen
-ausgewählt sein. Namen verwenden ASCII-Buchstaben/Ziffern, Leerzeichen, Unterstriche
-oder Bindestriche (max. 60 Zeichen); doppelte und unsichere Namen werden abgelehnt.
-Für lokale Analyse sind Keywords kommagetrennt; ChatGPT nutzt eine inhaltliche Beschreibung.
+Bei eigenen LLM-Regeln prüft ChatGPT deren Eignung für die Dokumente. Die eigene
+Forschungsfrage bleibt maßgeblich. Neue Themen erscheinen als zusätzliche,
+nicht ausgewählte Vorschläge. Erst deine Auswahl und Bestätigung ändern die Regeln.
+Bei einem gespeicherten Archiv wird diese Themenprüfung nicht automatisch wiederholt.
 
-Mit **Themen bestätigen & PDFs zuordnen** entstehen die Dateivorschläge. Ohne
-ausgewählte Themen schlägt die App nach Rückfrage Unclassified vor.
+Im Reiter **2 Themen** ein Thema auswählen und bearbeiten:
 
-## 4. Dateien bestätigen
+- **Themenname:** Name des Zielordners.
+- **Themenbeschreibung:** inhaltliche Abgrenzung für ChatGPT.
+- **Keywords:** kommagetrennte Wörter/Phrasen; für lokale Themen erforderlich.
+  Im LLM-Modus dienen sie als zusätzliche Orientierung.
+- **Dieses Thema verwenden:** nur ausgewählte Themen werden gespeichert.
 
-Wähle eine PDF im dritten Reiter. Prüfe Titel, Autor, Jahr, Thema und den Zielpfad.
-Alle Metadaten sind Vorschläge und dürfen korrigiert werden. Fehlende Angaben
-nutzen UnknownAuthor / UnknownYear. Das Jahr ist vierstellig oder UnknownYear.
+**Änderungen übernehmen** speichert die Eingaben im Entwurf. **Neues Thema** ergänzt
+eine Kategorie. Höchstens fünf Themen auswählen. Sichere Namen mit Buchstaben
+(einschließlich Umlauten), Ziffern, Leerzeichen, Unterstrichen und Bindestrichen
+sind erlaubt, maximal 60 Zeichen. Reservierte Windows-Namen, doppelte Namen und
+Unclassified als eigener Themenname sind ausgeschlossen.
 
-**Bestätigen & einsortieren** verschiebt ausschließlich diese Datei:
+**Regeln bestätigen & weiter** speichert die ausgewählten Regeln für diesen
+Archivordner und ordnet die PDFs zu. Ohne ausgewählte Themen ist nach Rückfrage
+Unclassified möglich. Bei bereits gespeicherten Regeln geht es nach der Analyse
+direkt zur Dateivorschau.
+
+## 4. Jede Datei prüfen und einsortieren
+
+Im Reiter **3 PDFs** Titel, Autor, Jahr, Thema und Zielpfad prüfen.
+Die Detailansicht nennt die Herkunft der Metadaten und mögliche Widersprüche.
+Neben PDF-Metadaten werden erkennbare Dateinamen wie
+`02_Jones_Origins_2006.pdf`, `Jones_2006_Origins.pdf` und
+`Jones - 2006 - Origins.pdf` ausgewertet. Das sind Vorschläge, keine verifizierten
+bibliografischen Angaben. Fehlende Werte bleiben UnknownAuthor / UnknownYear.
+
+**PDF öffnen** zeigt das Original im üblichen PDF-Programm.
+**Bestätigen & einsortieren** benennt ausschließlich die ausgewählte Datei um und
+verschiebt sie, beispielsweise nach:
 
 ```text
-Downloads/
-  Political History/
-    Ada_2024_Example_Title.pdf
+Literatur/
+  .smart-research-archive/
+    archive.sqlite3
+  Migration/
+    Jones_2006_Origins.pdf
   Unclassified/
     UnknownAuthor_UnknownYear_Another_Paper.pdf
   Noch_nicht_bestaetigt.pdf
 ```
 
-Die Themenordner werden im ausgewählten Ordner angelegt. Dateinamen sind portable
-ASCII-Namen nach Author_Year_Title.pdf. Namenskollisionen erhalten `_2`, `_3`, usw.
-Existierende Dateien werden nicht überschrieben. Vor und nach dem Kopieren prüft
-die App den PDF-Inhalt; bei Änderungen muss die Datei neu analysiert werden.
+Dateinamen folgen Author_Year_Title.pdf mit portablen ASCII-Zeichen.
+Kollisionen bekommen _2, _3 usw.; vorhandene Dateien werden nicht überschrieben.
+Geänderte Quelldateien müssen neu analysiert werden.
 
-**Überspringen** lässt die Datei unverändert. Eine neue Analyse liest nur noch die
-PDFs direkt im Ordner, ohne bereits einsortierte Unterordner erneut einzubeziehen.
+**Später prüfen** merkt die Datei einschließlich der eingegebenen Metadaten vor.
+**Überspringen** lässt sie unverändert. Beide Zustände werden beim nächsten Lauf
+wiederhergestellt. **Erneut prüfen** öffnet die ausgewählte vorgemerkte oder
+übersprungene Datei wieder zur Zuordnung und manuellen Prüfung.
 
-## Abbrechen, Fehler und Abmelden
+Identische Dateien erhalten **Duplikat** und einen Verweis auf die vorhandene
+Datei. Sie werden vor einer weiteren LLM-Auswertung erkannt und bleiben liegen.
+Die App löscht keine Duplikate. Erkannt wird gleicher Dateiinhalt, nicht derselbe
+Aufsatz in einer anderen Scanversion.
 
-### Gespeicherte ChatGPT-Verbindung löschen
+## 5. Später neue PDFs hinzufügen
 
-Ab Version 1.0.2 kannst du im ersten Reiter unter **ChatGPT-Verbindung** einen
-gespeicherten Eintrag auswählen und **Verbindung löschen** anklicken. Bestätige
-die Rückfrage für diesen Eintrag. Der Button steht unter den Modell-Einstellungen;
-bei kleinen Fenstern ggf. im Formular nach unten scrollen.
+Neue Downloads direkt in denselben Hauptordner legen. Die App merkt sich den zuletzt
+verwendeten Ordner. Beim Öffnen eines eingerichteten Archivs lädt sie dessen Regeln
+und wählt **Archivregeln verwenden**. **PDFs analysieren** prüft die neuen Dateien
+mit diesen Regeln. Bestehende Themenordner werden nicht erneut inhaltlich analysiert;
+für die Duplikatprüfung werden dort Dateiprüfsummen gelesen.
 
-Die App versucht, die gespeicherte Sitzung bei OpenAI zu widerrufen, und entfernt
-dann den gesamten lokalen Eintrag einschließlich Anmeldedaten. Auch abgemeldete
-und unvollständige Verbindungen lassen sich löschen. Andere Konten/Workspaces,
-deine PDFs und die stabile Installationskennung bleiben erhalten.
-Wenn kein Widerruf bestätigt werden kann, erscheint ein deutlicher Hinweis.
+Regeln über **Themen / Keywords festlegen oder bearbeiten** bewusst ändern.
+Alte Themenordner bleiben erhalten. Ein neuer Themenname benennt einen vorhandenen
+Ordner nicht automatisch um.
 
-Eine registrierte App-Freigabe in deinem ChatGPT-Konto wird durch das Löschen des
-lokalen Eintrags nicht automatisch entfernt. Trenne diese ggf. zusätzlich in den
-ChatGPT-Einstellungen. **Abmelden** bleibt separat verfügbar und behält den Eintrag
-für eine spätere Anmeldung. Nach dem Löschen ist eine neue Verbindung nötig.
+**Bestehende Sammlung ausdrücklich neu prüfen** nimmt nach Rückfrage zusätzlich
+PDFs direkt in den verwalteten Themenordnern und Unclassified auf. Fremde und
+tiefer verschachtelte Ordner bleiben außen vor. Jede Umbenennung oder Umsortierung
+braucht weiterhin eine Einzelbestätigung.
 
-**Abbrechen** stoppt vor dem nächsten Arbeitsschritt. Eine bereits laufende
-Netzwerkanfrage oder Kopie wird zunächst beendet. Bereits bestätigte Dateien
-bleiben einsortiert. Schließe die App erst, wenn der laufende Vorgang beendet ist.
-Bei einem Kopier-/Löschfehler kontrolliere Ausgangs- und Themenordner: Zwei Kopien
-können zurückbleiben, wenn die Quelle nach erfolgreicher Kopie nicht gelöscht werden konnte.
+Im LLM-Modus fordert **Neue Themen vorschlagen / Regeln prüfen** bewusst eine neue
+Prüfung an. **Regelvorschläge aus Korrekturen** bietet nach Korrekturen an mindestens
+zwei verschiedenen PDFs gemeinsame Begriffe als Entwurf an. Das ist eine einfache
+Begriffshilfe; die App lernt und ändert Regeln nicht unbemerkt.
+Die eigentliche Regeländerung braucht anschließend die Themenbestätigung.
 
-Für ChatGPT gelten 50 Input-PDFs und maximal 240.000 extrahierte Zeichen pro PDF.
-Es werden alle Abschnitte analysiert; überlange PDFs werden nicht still gekürzt.
-KI-Zusammenfassungen können Details verlieren, Zuordnungen können falsch sein.
-Geprüfte Belegzitate beweisen Wortlaut, nicht die Richtigkeit einer Interpretation.
+## Abbruch, Fortsetzen und Rückgängig
 
-**Abmelden** löscht lokale Tokens und versucht die Sitzung bei OpenAI zu widerrufen.
-Wenn das nicht bestätigt werden kann, trenne die App zusätzlich in ChatGPTs
-verbundenen Anwendungen. Windows speichert die Verbindung verschlüsselt unter
-`%LOCALAPPDATA%\SmartResearchArchive\chatgpt`. Die Deinstallation löscht weder
-deine PDFs noch diesen separaten Kontospeicher. Vor einer Deinstallation abmelden.
-Nach einem Absturz: Nur wenn keine App-Instanz mehr läuft, den leeren Unterordner
-`runtime.lock` im Kontospeicher löschen. Niemals Kontodateien weitergeben.
+**Abbrechen** stoppt am nächsten sicheren Schritt. Eine laufende Netzwerkanfrage
+oder Dateikopie wird zunächst beendet. Bestätigte Einsortierungen bleiben bestehen.
 
-## Status
+Erfolgreiche Textextraktionen, LLM-Abschnitte, Zusammenfassungen und Zuordnungen
+werden nach jedem Schritt lokal gespeichert. Zum Fortsetzen denselben Ordner und
+dasselbe Modell wählen und erneut analysieren. Bei einer Regeländerung werden
+Zuordnungen neu berechnet; passende Zusammenfassungen können weiterverwendet werden.
+Ein Themenentwurf wird beim Analysestart gesichert. Ein abgebrochener, noch nicht
+bestätigter Themenvorschlag kann erneut eine Modellanfrage benötigen.
 
-### Belegstellen und einzelne Modellfehler (ab 1.0.3)
+**Analysecache leeren** entfernt nach Rückfrage gespeicherte Analysedaten und
+Zuordnungen. Regeln, PDFs, Entscheidungen und Verschiebungsverlauf bleiben erhalten.
+Die nächste LLM-Analyse benötigt entsprechend neue Anfragen.
 
-Ein PDF kann Zeilenumbrüche, geschützte Leerzeichen, Ligaturen wie „ﬁ“ oder
-Trennstriche am Zeilenende enthalten. Die Belegprüfung berücksichtigt diese
-Formatierungsunterschiede und zeigt stets die ursprüngliche Fundstelle aus dem
-extrahierten PDF-Text. Wortänderungen, Übersetzungen und erfundene Auslassungen
-gelten weiterhin nicht als Beleg.
+**Letzte Einsortierung rückgängig machen** zeigt Original- und Zielpfad zur
+Bestätigung. Nur die unveränderte PDF wird zurückverschoben. Ist der ursprüngliche
+Name inzwischen belegt oder die archivierte Datei verändert, bricht die App ab.
+Die Aktion funktioniert auch nach einem Neustart; wiederholtes Aufrufen geht
+schrittweise durch den Verschiebungsverlauf.
 
-Eine nicht belegbare Textstelle wird verworfen, wenn für denselben Abschnitt noch
-mindestens eine geprüfte Stelle vorhanden ist. Gibt es in einem Abschnitt keinen
-prüfbaren Beleg, wird die automatische Analyse der betroffenen PDF verworfen.
-Die übrigen PDFs laufen weiter. Die Datei bleibt in der Vorschau als Unclassified
-mit einem Hinweis zur manuellen Prüfung; sie wird erst nach deiner Bestätigung
-verschoben. Auch eine ungültige Zuordnung betrifft nur die einzelne PDF.
-Anmelde-, Netzwerk-, Kontingent- und abgebrochene Streaming-Anfragen stoppen dagegen
-weiterhin den Lauf. Es erfolgen keine zusätzlichen automatischen Modell-Retries.
+## Lokale Daten und Grenzen
 
-Version 1.0.3 ist ein Desktop-Release-Kandidat für das Kursprojekt. Automatisierte
-Tests sowie EXE-/Installationschecks sind Bestandteil des Builds; ein persönlicher
-Live-Test mit ChatGPT und deiner PDF-Sammlung bleibt erforderlich.
-All rights reserved. Drittanbieter-Komponenten behalten ihre eigenen Lizenzen.
+`.smart-research-archive/archive.sqlite3` im Hauptordner enthält Regeln, extrahierte
+Texte, Zusammenfassungen, Entscheidungen, Dateiprüfsummen und Verschiebungsverlauf.
+Sie enthält keine ChatGPT-Zugangsdaten und ist nicht verschlüsselt.
+Beim Sichern oder Umziehen des Archivs den gesamten Ordner einschließlich dieses
+Unterordners mitnehmen. Bei Weitergabe kann die Datenbank Dokumentinhalte enthalten.
+
+Zugangsdaten liegen separat unter
+`%LOCALAPPDATA%\SmartResearchArchive\chatgpt` und sind unter Windows durch DPAPI
+an dein Benutzerkonto gebunden. Die zuletzt gewählte Ordneradresse wird ebenfalls
+im Benutzerprofil gespeichert. Diese Daten nicht auf GitHub hochladen.
+
+Keine OCR: Bildscans ohne Textlayer und nicht lesbare PDFs gehen nach **Später prüfen**.
+Unbelegte Modellzitate werden abgelehnt; sie führen zur manuellen Prüfung dieser
+Datei. Konten-/Netzwerk-/Limitfehler stoppen den Lauf, gespeicherte Schritte bleiben
+erhalten. Es gibt keine versteckten automatischen Wiederholungen.
+Ein neuer Lauf bearbeitet höchstens 50 noch nicht gespeicherte LLM-Dokumente;
+lange Texte sind auf 20 Abschnitte beziehungsweise 240.000 Zeichen je PDF begrenzt.
+
+Das Programm ist ein akademischer, AI-assisted entwickelter Prototyp. Automatisierte
+Tests mit synthetischen PDFs und simulierten Modellantworten prüfen die Abläufe,
+nicht die historische Richtigkeit der Ergebnisse. Inhaltliche Vorschläge und
+Metadaten weiterhin selbst prüfen. Keine CSV-Ausgabe und keine Embeddings.
+
+All rights reserved; siehe Rechtehinweis in der README. Keine Open-Source-Lizenz.

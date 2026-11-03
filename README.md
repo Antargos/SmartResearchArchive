@@ -1,37 +1,58 @@
 # Smart Research Archive
 
-## Windows desktop version 1.0.3
+## Windows desktop version 2.0.0
 
-Branch **`release/windows-desktop-v1`** combines the local classifier, collection
-topic suggestions and ChatGPT semantic analysis in a native German desktop UI.
-It adds a Windows EXE bundle and a per-user installer. Download the latest desktop
-candidate from [Releases](https://github.com/Antargos/SmartResearchArchive/releases).
-The Windows build creates downloads only after automated tests, packaged GUI startup,
-installation and uninstallation checks succeed.
+Branch **`feature/archive-workflow-v2`** adds a persistent, reviewed archive workflow
+to the German desktop app. Download the Windows installer or portable ZIP from
+[Releases](https://github.com/Antargos/SmartResearchArchive/releases).
+The build publishes downloads after regression tests, real Windows GUI checks,
+packaged startup, installation and uninstallation checks succeed.
 
-1. Install `SmartResearchArchive-1.0.3-Setup.exe` and start the app from the Start menu.
-2. Select the folder containing your PDFs, e.g. Downloads.
-3. Choose a local analysis mode or connect ChatGPT in your browser and choose a model.
-4. Review/edit up to five topics, then review every PDF's metadata and destination.
-5. **Bestätigen & einsortieren** moves that PDF into a topic subfolder **inside the
-   selected folder**. Skip leaves it untouched. Existing subfolders are not scanned.
+1. Install **SmartResearchArchive-2.0.0-Setup.exe** and open the app from the Start menu.
+2. Choose **Lokal** or **ChatGPT (LLM)**, then your own topics/keywords or suggestions.
+3. Select your PDF folder. For ChatGPT, connect in the browser, choose a model and
+   allow external processing.
+4. **PDFs analysieren**, review the topics, then **Regeln bestätigen & weiter**.
+5. Review each PDF and choose **Bestätigen & einsortieren**. It moves only that file
+   into a topic subfolder of the selected folder.
 
-Example: `Downloads/Political History/Ada_2024_Example_Title.pdf`.
-No separate output folder is needed in the GUI. PDFs are never committed to GitHub.
+The archive remembers approved topics, descriptions and keywords. Later, place
+new downloads directly in the same main folder and analyze with **Archivregeln
+verwenden**. Existing topic folders are reused. They are only analyzed again
+through **Bestehende Sammlung ausdrücklich neu prüfen**, followed by file review.
+Old folder names are retained when rules change; a rule edit does not rename folders.
 
-Saved ChatGPT connections can be removed with **Verbindung löschen** in the first
-tab: select an account/workspace and confirm deletion. This forgets the local
-registration and credentials after attempting session revocation. **Abmelden**
-retains the registration for later use. Other accounts and PDFs remain untouched;
-remaining remote app grants can be disconnected in ChatGPT settings.
-Keep backups; confirmed moves change your local collection. Existing files are not
-overwritten and changed source PDFs must be reanalyzed. Unclassified remains available.
+ChatGPT checks user-defined topics without replacing them. Optional additions
+require selection and confirmation. Local proposals are unselected vocabulary
+helpers, not reliable semantic categories. At most five topics can be approved;
+unmatched or ambiguous files use Unclassified. Keywords are required locally;
+ChatGPT uses descriptions and keywords as content guidance. No embeddings.
 
-Windows 10/11 x64; no separate Python installation is needed for the packaged app.
-The portable ZIP is an alternative: extract everything and retain `_internal` beside
-the EXE. This release candidate is unsigned; live ChatGPT eligibility and scholarly
-accuracy remain to be tested with your own account. The all-rights-reserved notice
-below applies; the bundle separately includes third-party license notices.
+Metadata also recognizes layouts such as `02_Jones_Origins_2006.pdf`. Provenance
+and conflicts are shown for review. **PDF öffnen**, **Später prüfen**,
+**Überspringen**, **Erneut prüfen** and safe **Rückgängig** support manual decisions.
+Exact duplicate PDFs are identified before LLM analysis and left untouched.
+Successful extraction, model sections, summaries and assignments are cached for
+restart. Repeated corrections can produce optional keyword drafts; rules never
+change automatically.
+
+State is stored in **`.smart-research-archive/archive.sqlite3` inside the selected
+folder**: approved rules, extracted text, summaries, decisions, hashes and move
+history. It contains document content and is not encrypted. Include it when backing
+up or relocating an archive. **Analysecache leeren** deletes cached analysis while
+retaining rules, decisions, files and move history. Saved ChatGPT credentials live
+separately in the protected per-user store described below; they are not in the archive.
+
+Windows 10/11 x64; Python is included in the package. For the portable ZIP, extract
+all files and keep `_internal` beside the EXE. Close the old app before updating.
+The installer is unsigned. Keep backups: file confirmation changes the original
+collection. Existing files are not overwritten, and changed sources require reanalysis.
+Duplicate detection means identical bytes, not matching scholarly works.
+OCR, CSV output and scholarly accuracy guarantees are outside scope.
+
+Saved ChatGPT connections can still be removed with **Verbindung löschen**.
+Live eligibility and model quality need evaluation with your own account.
+No research PDFs or credentials are committed to GitHub.
 
 **[Windows user guide (German)](docs/windows-user-guide.md)**
 
@@ -45,17 +66,17 @@ python -m pip install -r requirements-build.txt
 python tools/build_windows.py
 ```
 
-`src/desktop.py` holds GUI widgets and background-job handling;
-`src/desktop_service.py` contains independently testable analysis and in-place
-sorting. OAuth/model logic remains separate. The GUI stays responsive during work;
-cancel stops at the next safe step after a current network request or copy finishes.
-See `.github/workflows/windows-desktop.yml` for the automated build/release process.
-Generated binaries are release assets, not Git source files.
+The GUI stays responsive during analysis. Cancel stops at the next safe step after
+a current network request or copy finishes. The build workflow is in
+`.github/workflows/windows-desktop.yml`; generated binaries are release assets.
 
-The remaining sections document the optional command-line interfaces and research scope.
+The following sections describe the older, optional command-line interfaces.
+Persistent archive profiles and the revised workflow above apply to the desktop
+app; the CLI retains its own per-session topics and separate input/output folders.
 
-A beginner-friendly local Python tool for organizing academic PDFs for historical
-research. Academic prototype / work in progress for **Applied Programming Projects**.
+A beginner-friendly Python tool for organizing academic PDFs for historical
+research. Academic prototype for **Applied Programming Projects**, developed with
+AI assistance. All rights reserved; see the notice below.
 
 ## Experimental ChatGPT integration
 
@@ -142,7 +163,7 @@ Model requests use the public Responses API with streamed, unstored requests,
 not ChatGPT's private browser endpoints. Model outputs cannot execute tools or
 choose arbitrary filesystem paths.
 
-All **31 regression tests** pass on the Windows build runner, including simulated OAuth, signed-token checks,
+The command-line integration tests pass on the Windows build runner, including simulated OAuth, signed-token checks,
 Windows protected storage, incomplete responses, semantic output validation and
 the entire file-review workflow. **Live sign-in, actual account eligibility and
 scholarly classification quality have not yet been verified.** Start with your own
@@ -246,7 +267,7 @@ How it works:
    the same evidence as an already selected phrase are suppressed.
 5. Accept, change or skip each proposal. Change lets you set a topic name and
    comma-separated matching keywords; accept the updated preview separately.
-   Names must use ASCII letters/numbers/spaces/underscores/hyphens (max 60 characters),
+   Names use safe letters/numbers/spaces/underscores/hyphens (max 60 characters),
    and cannot be duplicate, reserved device names or Unclassified.
 6. Classify each PDF with the accepted keywords and the original transparent scoring
    rules. A separate Accept/Change/Skip review is still required for every file move.
@@ -304,7 +325,8 @@ The project applies descriptive metadata, consistent naming, thematic organizati
 and retrieval to historical research literature. Transparent rules and human review
 make decisions inspectable. It is not a complete long-term preservation system,
 does not implement OAIS or PREMIS and does not replace scholarly source criticism.
-It does not maintain an archival provenance database.
+The desktop move history and metadata-source hints are a practical local audit trail,
+not a formal archival provenance or preservation database.
 
 ## Learning and AI-assisted coding
 The project starts from beginner experience, mainly AI-assisted “vibe coding”.
@@ -324,7 +346,10 @@ in `docs/project-journal.md`; review with real research papers remains to be don
 | `src/chatgpt_client.py` | Available models and completed Responses API streams |
 | `src/semantic.py` | Section summaries, semantic topics and validated model results |
 | `src/chatgpt_workflow.py` | External-processing consent and human file review |
-| `tests/test_archive.py` | Temporary synthetic PDFs and behavior checks |
+| `src/archive_store.py` | Per-folder rules, checkpoints, hashes and move history |
+| `src/archive_workflow.py` | Resume, duplicate checks, rule review and undo |
+| `src/desktop.py` | German desktop interface and background jobs |
+| `tests/` | Synthetic PDF, workflow, authentication and Windows GUI checks |
 
 Run with the virtual environment's Python:
 
