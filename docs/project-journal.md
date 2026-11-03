@@ -191,3 +191,13 @@ and cancel to fit inside every ancestor's visible bounds and verify that scrolli
 the form does not move the analysis button. Build/installer checks remain enabled.
 Codex drafted the fix and regression checks. CI results will determine release status;
 this entry does not claim the user's display has already been tested personally.
+
+### Validation and downloadable update
+Windows build 3 passed the 31 existing regression tests and all three dedicated
+real-Tk layout checks. Primary actions and cancel remained within visible ancestor
+bounds in all nine size/scaling combinations, and page scrolling kept the analysis
+button fixed. Packaged EXE startup, installation and uninstallation also passed.
+Published update: https://github.com/Antargos/SmartResearchArchive/releases/tag/desktop-v1.0.1-build.3
+Validated code: `96a7c81bc28082c090d8a1060a4a4bb4acd78f22`.
+This is an automated reproduction of the size/scaling issue, not a personal test
+on the user's monitor. Close the running app before installing version 1.0.1.
