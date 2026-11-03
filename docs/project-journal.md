@@ -257,3 +257,12 @@ processing, per-PDF classification errors and stopping on genuine provider failu
 Ten text-only cases passed locally; the three PDF/folder cases require the Windows
 runner because of local sandbox path/temp restrictions. The actual Jones PDF was
 not provided, so this is not a reproduction using its copyrighted contents.
+
+### Validation and release
+Windows build 5 passed all 50 non-GUI cases (including all 13 new evidence cases)
+and four dedicated Tk cases. EXE startup, install and uninstall checks passed.
+Published `desktop-v1.0.3-build.5`, validated code
+`ce2480a1d95fd74c145526600db9ff64a8ce739c`:
+https://github.com/Antargos/SmartResearchArchive/releases/tag/desktop-v1.0.3-build.5
+No real PDFs or user tokens were used in the build. The specific Jones document
+remains untested; unsupported evidence still results in manual review, not acceptance.
