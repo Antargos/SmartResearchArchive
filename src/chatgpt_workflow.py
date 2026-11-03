@@ -1,7 +1,7 @@
 """Optional external analysis. Local keyword modes never instantiate this client."""
 
 from .analysis import read_pdf
-from .chatgpt_auth import ConnectionError, connect, load, session_lock
+from .chatgpt_auth import ConnectionError, ModelOutputError, connect, load, session_lock
 from .chatgpt_client import ChatGPTClient
 from .semantic import (analyze_document, approve_semantic_topics, classify_semantically,
                        propose_topics)
@@ -24,7 +24,7 @@ def run_chatgpt(papers, output, review, model=None, topics_only=False,
         selected = ChatGPTClient.choose_model(profile, model)
         show(f'Using ChatGPT plan, model: {selected}')
         client = ChatGPTClient(profile, selected, state)
-        loaded, analyses, filenames = {}, {}, {}
+        loaded, analyses, filenames, problems = {}, {}, {}, {}
         for number, source in enumerate(papers, 1):
             document_id = f'PDF{number}'
             try:
@@ -33,8 +33,13 @@ def run_chatgpt(papers, output, review, model=None, topics_only=False,
                 show(f'Could not read {source.name}; excluded from semantic analysis.')
                 continue
             show(f'Analyzing {source.name}...')
-            # Fail the run on provider/validation errors. Nothing has moved yet.
-            analysis = analyze_document(client, text)
+            # Provider errors stop the run; invalid document output is isolated.
+            try:
+                analysis = analyze_document(client, text)
+            except ModelOutputError as error:
+                analysis = None
+                problems[document_id] = str(error)
+                show(f'{source.name}: {error} Unclassified; weitere PDFs werden verarbeitet.')
             loaded[document_id] = (source, metadata)
             filenames[document_id] = source.name
             if analysis:
@@ -42,7 +47,9 @@ def run_chatgpt(papers, output, review, model=None, topics_only=False,
                 show('Summary: ' + analysis['summary'])
                 for quote in analysis['evidence']:
                     show('Verified text excerpt: ' + quote)
-            else:
+                for warning in analysis.get('warnings', []):
+                    show('Hinweis: ' + warning)
+            elif document_id not in problems:
                 show('No extractable text; Unclassified. OCR is not included.')
         proposals = propose_topics(client, analyses)
         topics = approve_semantic_topics(proposals, filenames, ask=ask, show=show)
@@ -50,7 +57,13 @@ def run_chatgpt(papers, output, review, model=None, topics_only=False,
             show('Topic preview finished; no PDFs moved. Topics are session-only.')
             return
         for document_id, (source, metadata) in loaded.items():
-            topic, reason = classify_semantically(client, analyses.get(document_id), topics)
+            if document_id in problems:
+                topic, reason = 'Unclassified', problems[document_id] + ' Bitte manuell prüfen.'
+            else:
+                try:
+                    topic, reason = classify_semantically(client, analyses.get(document_id), topics)
+                except ModelOutputError as error:
+                    topic, reason = 'Unclassified', str(error) + ' Bitte manuell prüfen.'
             show(f'\nSuggested topic for {source.name}: {topic}\nModel reason: {reason}')
             show('The reason describes the original suggestion; you can change the topic below.')
             # Reuse the existing safe file review, passing approved names rather than

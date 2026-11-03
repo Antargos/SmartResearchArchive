@@ -2,7 +2,7 @@
 
 import json
 
-from .chatgpt_auth import ConnectionError, RESOURCE, refresh, request
+from .chatgpt_auth import ConnectionError, ModelOutputError, RESOURCE, refresh, request
 
 
 def completed_text(response):
@@ -81,4 +81,4 @@ class ChatGPTClient:
                 raise ValueError('object required')
             return value
         except ValueError:
-            raise ConnectionError('Model did not return valid JSON. Nothing was moved; try again.') from None
+            raise ModelOutputError('Die Modellantwort enthält kein gültiges JSON; die Datei bleibt zur manuellen Prüfung.') from None

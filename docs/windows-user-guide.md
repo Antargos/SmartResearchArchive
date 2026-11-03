@@ -3,7 +3,7 @@
 ## Installieren
 
 Lade auf der [GitHub-Release-Seite](https://github.com/Antargos/SmartResearchArchive/releases)
-die Datei **SmartResearchArchive-1.0.2-Setup.exe** aus dem neuesten Desktop-Build herunter.
+die Datei **SmartResearchArchive-1.0.3-Setup.exe** aus dem neuesten Desktop-Build herunter.
 Starte sie und folge dem Assistenten. Die Installation erfolgt für dein Windows-Konto,
 ohne Administratorrechte. Danach findest du die App im Startmenü. Python muss nicht
 separat installiert werden. Unterstützt: Windows 10/11, 64 Bit.
@@ -137,7 +137,24 @@ Nach einem Absturz: Nur wenn keine App-Instanz mehr läuft, den leeren Unterordn
 
 ## Status
 
-Version 1.0.2 ist ein Desktop-Release-Kandidat für das Kursprojekt. Automatisierte
+### Belegstellen und einzelne Modellfehler (ab 1.0.3)
+
+Ein PDF kann Zeilenumbrüche, geschützte Leerzeichen, Ligaturen wie „ﬁ“ oder
+Trennstriche am Zeilenende enthalten. Die Belegprüfung berücksichtigt diese
+Formatierungsunterschiede und zeigt stets die ursprüngliche Fundstelle aus dem
+extrahierten PDF-Text. Wortänderungen, Übersetzungen und erfundene Auslassungen
+gelten weiterhin nicht als Beleg.
+
+Eine nicht belegbare Textstelle wird verworfen, wenn für denselben Abschnitt noch
+mindestens eine geprüfte Stelle vorhanden ist. Gibt es in einem Abschnitt keinen
+prüfbaren Beleg, wird die automatische Analyse der betroffenen PDF verworfen.
+Die übrigen PDFs laufen weiter. Die Datei bleibt in der Vorschau als Unclassified
+mit einem Hinweis zur manuellen Prüfung; sie wird erst nach deiner Bestätigung
+verschoben. Auch eine ungültige Zuordnung betrifft nur die einzelne PDF.
+Anmelde-, Netzwerk-, Kontingent- und abgebrochene Streaming-Anfragen stoppen dagegen
+weiterhin den Lauf. Es erfolgen keine zusätzlichen automatischen Modell-Retries.
+
+Version 1.0.3 ist ein Desktop-Release-Kandidat für das Kursprojekt. Automatisierte
 Tests sowie EXE-/Installationschecks sind Bestandteil des Builds; ein persönlicher
 Live-Test mit ChatGPT und deiner PDF-Sammlung bleibt erforderlich.
 All rights reserved. Drittanbieter-Komponenten behalten ihre eigenen Lizenzen.

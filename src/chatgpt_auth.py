@@ -30,6 +30,10 @@ class ConnectionError(RuntimeError):
     """A safe, user-facing error that does not include tokens or server bodies."""
 
 
+class ModelOutputError(ConnectionError):
+    """A completed model answer failed local validation, not account/network access."""
+
+
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
         return None  # Do not forward credentials to a redirect target.

@@ -50,7 +50,7 @@ jobs:
       - name: Save downloadable build files
         uses: actions/upload-artifact@v4
         with:
-          name: SmartResearchArchive-Windows-1.0.2
+          name: SmartResearchArchive-Windows-1.0.3
           path: artifacts/
           if-no-files-found: error
           retention-days: 30
@@ -60,6 +60,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $releaseTag = 'desktop-v1.0.2-build.${{ github.run_number }}'
-          gh release create $releaseTag artifacts/SmartResearchArchive-1.0.2-Setup.exe artifacts/SmartResearchArchive-1.0.2-Portable.zip artifacts/SHA256SUMS.txt artifacts/build-info.json --target '${{ github.sha }}' --title 'Smart Research Archive 1.0.2 — Windows' --prerelease --notes-file packaging/release-notes.md
+          $releaseTag = 'desktop-v1.0.3-build.${{ github.run_number }}'
+          gh release create $releaseTag artifacts/SmartResearchArchive-1.0.3-Setup.exe artifacts/SmartResearchArchive-1.0.3-Portable.zip artifacts/SHA256SUMS.txt artifacts/build-info.json --target '${{ github.sha }}' --title 'Smart Research Archive 1.0.3 — Windows' --prerelease --notes-file packaging/release-notes.md
           if ($LASTEXITCODE -ne 0) { throw 'Release upload failed' }

@@ -231,3 +231,29 @@ Validated code: `2424cabc8eec9f3ea04e944ae3490be77e243849`.
 Release: https://github.com/Antargos/SmartResearchArchive/releases/tag/desktop-v1.0.2-build.4
 These are simulated-account checks; the build did not revoke or delete any real
 user connection. Runtime failure to confirm remote revocation is reported explicitly.
+
+## 3 November 2026 — Isolate PDF evidence validation failures
+
+The user supplied a log ending at PDF 1/22 with “Model evidence does not match the
+PDF text; result rejected.” Earlier sign-in/out messages were separate attempts;
+the final run had already received a model answer. The exact substring check
+rejected layout-only differences as well as genuinely unsupported quotations, and
+propagated both as a fatal collection-level ConnectionError.
+
+Version 1.0.3 folds PDF whitespace, compatibility ligatures, soft hyphens and line-end
+hyphenation for matching, while mapping a match back to an actual original source
+substring. No fuzzy matching, translation or word substitution. Unmatched quotes
+are discarded with warnings if another quote validates for the same section.
+If any section has no valid evidence, reject that document's automatic analysis,
+keep its metadata and mark it Unclassified for manual review. The rest of the
+collection continues. Invalid per-document classification is similarly isolated.
+Provider/network/auth/usage failures and incomplete streams remain fatal; no new
+automatic inference retries. Apply the same isolation to desktop and CLI.
+
+Codex drafted the fix after reviewing OpenAI Docs about validating model outputs.
+Thirteen synthetic regressions cover formatting, unchanged source excerpts,
+fabricated/transformed wording, partial-section rejection, continued collection
+processing, per-PDF classification errors and stopping on genuine provider failures.
+Ten text-only cases passed locally; the three PDF/folder cases require the Windows
+runner because of local sandbox path/temp restrictions. The actual Jones PDF was
+not provided, so this is not a reproduction using its copyrighted contents.

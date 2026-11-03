@@ -24,7 +24,7 @@ def run():
         root.update_idletasks()
         if '--report' in sys.argv:
             path = Path(sys.argv[sys.argv.index('--report') + 1])
-            path.write_text(json.dumps({'window_created': True, 'tabs': 4, 'version': '1.0.2'}), encoding='utf-8')
+            path.write_text(json.dumps({'window_created': True, 'tabs': 4, 'version': '1.0.3'}), encoding='utf-8')
         root.destroy()
         return
     from src.desktop import main

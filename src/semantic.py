@@ -3,7 +3,8 @@
 import json
 
 from .analysis import UNCLASSIFIED
-from .chatgpt_auth import ConnectionError
+from .chatgpt_auth import ConnectionError, ModelOutputError
+from .evidence import source_excerpt
 from .files import valid_topic_name
 
 RULES = ('You analyze academic literature by meaning, not keyword frequency. '
@@ -16,32 +17,38 @@ def chunks(text, size=12000):
     """Cover the entire extracted text, with a modest character bound per request."""
     text = text.strip()
     if len(text) > size * 20:
-        raise ConnectionError('PDF is too long for this prototype (maximum 240,000 characters); skipped.')
+        raise ModelOutputError('PDF überschreitet 240.000 Zeichen; manuelle Prüfung erforderlich.')
     return [text[start:start + size] for start in range(0, len(text), size)]
 
 
 def text_field(value, key, limit):
     result = value.get(key)
     if not isinstance(result, str) or not result.strip() or len(result) > limit:
-        raise ConnectionError(f'Model returned an invalid {key}; result rejected.')
+        raise ModelOutputError(f'Modellantwort enthält ein ungültiges Feld ({key}); manuelle Prüfung erforderlich.')
     return result.strip()
 
 
 def analyze_document(client, text):
-    parts, quotes = [], []
+    parts, quotes, warnings = [], [], []
     for number, fragment in enumerate(chunks(text), 1):
         result = client.json_result(RULES +
             'Summarize the subject, research question, period and principal arguments. '
             'Return {"summary": string (max 1200 characters), "evidence": '
-            'array of 1 to 3 exact short quotations (max 200 characters each)}.',
+            'array of 1 to 3 exact short quotations (max 200 characters each)}. '
+            'Copy quotations directly from document_text in the original language. '
+            'Do not translate, paraphrase, change words or insert ellipses.',
             json.dumps({'section': number, 'document_text': fragment}, ensure_ascii=False))
         parts.append(text_field(result, 'summary', 1200))
         evidence = result.get('evidence')
-        if (not isinstance(evidence, list) or not 1 <= len(evidence) <= 3
-                or any(not isinstance(quote, str) or not quote.strip() or len(quote) > 200
-                       or quote not in fragment for quote in evidence)):
-            raise ConnectionError('Model evidence does not match the PDF text; result rejected.')
-        quotes.extend(evidence)
+        if not isinstance(evidence, list) or not 1 <= len(evidence) <= 3:
+            raise ModelOutputError(f'Abschnitt {number}: keine gültige Liste von Belegstellen. Manuelle Prüfung erforderlich.')
+        verified = [excerpt for quote in evidence if (excerpt := source_excerpt(fragment, quote)) is not None]
+        if not verified:
+            raise ModelOutputError(f'Abschnitt {number}: keine Belegstelle im PDF-Text wiedergefunden. '
+                                   'Die automatische Analyse dieser Datei wurde verworfen.')
+        if len(verified) < len(evidence):
+            warnings.append(f'Abschnitt {number}: {len(evidence) - len(verified)} nicht belegte Textstelle(n) verworfen.')
+        quotes.extend(verified)
     if not parts:
         return None
     if len(parts) == 1:
@@ -52,7 +59,10 @@ def analyze_document(client, text):
             'Return {"summary": string, max 1200 characters}. Preserve important qualifications.',
             json.dumps({'section_summaries': parts}, ensure_ascii=False))
         summary = text_field(result, 'summary', 1200)
-    return {'summary': summary, 'evidence': list(dict.fromkeys(quotes))[:3]}
+    analysis = {'summary': summary, 'evidence': list(dict.fromkeys(quotes))[:3]}
+    if warnings:
+        analysis['warnings'] = warnings
+    return analysis
 
 
 def parse_topics(result, known_ids):
@@ -138,5 +148,5 @@ def classify_semantically(client, analysis, topics):
                     'allowed_topics': topics}, ensure_ascii=False))
     topic = text_field(result, 'topic', 60)
     if topic not in (*topics, UNCLASSIFIED):
-        raise ConnectionError('Model selected an unknown topic; no file moved.')
+        raise ModelOutputError('Das Modell hat ein unbekanntes Thema ausgewählt; manuelle Prüfung erforderlich.')
     return topic, text_field(result, 'reason', 800)

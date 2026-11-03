@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 
 from .analysis import Metadata, TOPICS, UNCLASSIFIED, classify, read_pdf
+from .chatgpt_auth import ModelOutputError
 from .files import destination, is_link, move_pdf, safe_part, scan_pdfs, valid_topic_name
 from .semantic import analyze_document, classify_semantically, propose_topics
 from .suggestions import suggest_topics
@@ -28,6 +29,7 @@ class Paper:
     reason: str = ''
     status: str = 'Offen'
     archived_to: Path | None = None
+    analysis_problem: str = ''
 
 
 @dataclass
@@ -92,8 +94,20 @@ def prepare(folder, mode, client=None, progress=lambda message: None, cancelled=
         except Exception as error:
             errors.append(f'{path.name}: {error}')
             continue
-        analysis = analyze_document(model, text) if model else None
+        analysis, problem = None, ''
+        if model:
+            try:
+                analysis = analyze_document(model, text)
+            except ModelOutputError as error:
+                problem = str(error)
+                message = f'{path.name}: {problem} Vorschlag: Unclassified; weitere PDFs werden verarbeitet.'
+                errors.append(message)
+                progress(message)
         paper = Paper(path, metadata, before, text, analysis)
+        paper.analysis_problem = problem
+        for warning in (analysis or {}).get('warnings', []):
+            errors.append(f'{path.name}: {warning}')
+            progress(f'{path.name}: {warning}')
         papers.append(paper)
         if analysis:
             document_id = f'PDF{len(papers)}'
@@ -150,7 +164,15 @@ def assign(collection, topics, client=None, progress=lambda message: None, cance
         if collection.mode == MODES[2]:
             if model is None:
                 raise ValueError('ChatGPT-Verbindung fehlt.')
-            paper.topic, paper.reason = classify_semantically(model, paper.analysis, topics)
+            if paper.analysis_problem:
+                paper.topic, paper.reason = UNCLASSIFIED, paper.analysis_problem + ' Bitte manuell prüfen.'
+            else:
+                try:
+                    paper.topic, paper.reason = classify_semantically(model, paper.analysis, topics)
+                except ModelOutputError as error:
+                    paper.topic, paper.reason = UNCLASSIFIED, str(error) + ' Bitte manuell prüfen.'
+                    collection.errors.append(f'{paper.source.name}: {paper.reason}')
+                    progress(f'{paper.source.name}: {paper.reason}')
         else:
             paper.topic, matches = classify(paper.text, topics)
             paper.reason = '\n'.join(f'{name}: {len(words)} Punkte ({", ".join(words) or "keine Treffer"})'

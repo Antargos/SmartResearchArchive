@@ -16,7 +16,7 @@ from .desktop_service import (MODES, Cancelled, Topic, approved_mapping, archive
 from .files import destination
 from .scrollable import ScrollableFrame
 
-VERSION = '1.0.2'
+VERSION = '1.0.3'
 
 
 class ArchiveApp:
@@ -435,7 +435,7 @@ class ArchiveApp:
             self.append_log(error)
         if collection.topics:
             self.topic_tree.selection_set('0')
-        self.status.set(f'{len(collection.papers)} PDFs vorbereitet; {len(collection.errors)} nicht lesbar. Noch keine Datei verschoben.')
+        self.status.set(f'{len(collection.papers)} PDFs vorbereitet; {len(collection.errors)} Hinweise im Verlauf. Noch keine Datei verschoben.')
         self.tabs.select(self.topic_page)
 
     def topic_selected(self, event=None):
@@ -513,6 +513,8 @@ class ArchiveApp:
         if paper.analysis:
             details += '\n\nZusammenfassung:\n' + paper.analysis['summary']
             details += '\n\nIm Text geprüfte Belegstellen:\n' + '\n\n'.join(paper.analysis['evidence'])
+            if paper.analysis.get('warnings'):
+                details += '\n\nHinweise:\n' + '\n'.join(paper.analysis['warnings'])
         self.details.configure(state='normal')
         self.details.delete('1.0', 'end')
         self.details.insert('1.0', details)

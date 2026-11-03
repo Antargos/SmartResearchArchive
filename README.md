@@ -1,6 +1,6 @@
 # Smart Research Archive
 
-## Windows desktop version 1.0.2
+## Windows desktop version 1.0.3
 
 Branch **`release/windows-desktop-v1`** combines the local classifier, collection
 topic suggestions and ChatGPT semantic analysis in a native German desktop UI.
@@ -9,7 +9,7 @@ candidate from [Releases](https://github.com/Antargos/SmartResearchArchive/relea
 The Windows build creates downloads only after automated tests, packaged GUI startup,
 installation and uninstallation checks succeed.
 
-1. Install `SmartResearchArchive-1.0.2-Setup.exe` and start the app from the Start menu.
+1. Install `SmartResearchArchive-1.0.3-Setup.exe` and start the app from the Start menu.
 2. Select the folder containing your PDFs, e.g. Downloads.
 3. Choose a local analysis mode or connect ChatGPT in your browser and choose a model.
 4. Review/edit up to five topics, then review every PDF's metadata and destination.
@@ -101,7 +101,10 @@ in ChatGPT's usage and connected-app settings. This app has no separate allowanc
    Limit: 20 sections / 240,000 characters per PDF and 50 input PDFs per run.
    Over-limit text is rejected, not silently truncated. OCR remains outside scope.
 2. Generate a concise document summary and short exact quotations. Quotes are
-   checked against the extracted text; fabricated quotes reject the result.
+   checked against extracted text with PDF-layout normalization. Unverified quotes
+   are discarded; if any section has no valid quote, that document's automatic
+   analysis is rejected and it is retained as Unclassified for manual review.
+   Other documents continue. Displayed evidence always uses actual source text.
    Multiple section summaries are synthesized. Up to three quotes are displayed
    per document; they verify wording, not the correctness of interpretation.
 3. Suggest up to five common themes with descriptions and related PDF IDs.
@@ -114,7 +117,9 @@ in ChatGPT's usage and connected-app settings. This app has no separate allowanc
 
 No accepted topics or no readable text means Unclassified. Invalid JSON, unsafe
 folder names, unknown document IDs/topics and failed/incomplete model streams are
-rejected. Provider errors stop the run; accepted files stay archived and unaccepted
+rejected. Individual invalid document answers/assignments are isolated and marked
+Unclassified with a review reason. Account/network/usage and incomplete-stream
+errors still stop the run; accepted files stay archived and unaccepted
 files stay in input. There are no automatic paid retries. Summaries and topic
 choices apply only to the current run and are not written to an index.
 
