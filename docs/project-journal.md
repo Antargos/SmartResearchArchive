@@ -315,3 +315,22 @@ Local full PDF tests are restricted by temp/path access in the execution environ
 the unrestricted Windows CI runner is used for authoritative filesystem/GUI checks.
 All model responses and accounts in tests are simulated; live sign-in and actual
 historical classification quality are not claimed as tested.
+
+### Final validation and release
+
+Windows build 9 passed all 69 non-GUI cases and all eight dedicated real-Tk cases
+(77 distinct tests total). GUI layouts were checked at the three window sizes and
+three scaling settings listed above. Source startup, packaged startup, per-user
+installation, installed startup and uninstallation checks all succeeded.
+
+The final audit regression also checks that an already canonical archived PDF is
+previewed at its actual path and kept there, without adding a collision suffix or
+a fictitious undo operation. The LLM rule-review instruction explicitly asks for
+concrete keyword alternatives in its human-readable review; changing those keywords
+still requires editing and confirming the rules.
+
+Validated source commit: 6bf3c76922390fa2b1fb5caea5f65ac4c922a276.
+Windows release: https://github.com/Antargos/SmartResearchArchive/releases/tag/desktop-v2.0.0-build.9
+Branch: feature/archive-workflow-v2. Installer, portable ZIP, build information and
+SHA256 checksums are published. The installer remains unsigned. No live ChatGPT
+requests, real account actions or copyrighted research PDFs were used in validation.
