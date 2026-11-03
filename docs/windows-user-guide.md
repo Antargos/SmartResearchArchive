@@ -3,7 +3,7 @@
 ## Installieren
 
 Lade auf der [GitHub-Release-Seite](https://github.com/Antargos/SmartResearchArchive/releases)
-die Datei **SmartResearchArchive-1.0.1-Setup.exe** aus dem neuesten Desktop-Build herunter.
+die Datei **SmartResearchArchive-1.0.2-Setup.exe** aus dem neuesten Desktop-Build herunter.
 Starte sie und folge dem Assistenten. Die Installation erfolgt für dein Windows-Konto,
 ohne Administratorrechte. Danach findest du die App im Startmenü. Python muss nicht
 separat installiert werden. Unterstützt: Windows 10/11, 64 Bit.
@@ -98,6 +98,24 @@ PDFs direkt im Ordner, ohne bereits einsortierte Unterordner erneut einzubeziehe
 
 ## Abbrechen, Fehler und Abmelden
 
+### Gespeicherte ChatGPT-Verbindung löschen
+
+Ab Version 1.0.2 kannst du im ersten Reiter unter **ChatGPT-Verbindung** einen
+gespeicherten Eintrag auswählen und **Verbindung löschen** anklicken. Bestätige
+die Rückfrage für diesen Eintrag. Der Button steht unter den Modell-Einstellungen;
+bei kleinen Fenstern ggf. im Formular nach unten scrollen.
+
+Die App versucht, die gespeicherte Sitzung bei OpenAI zu widerrufen, und entfernt
+dann den gesamten lokalen Eintrag einschließlich Anmeldedaten. Auch abgemeldete
+und unvollständige Verbindungen lassen sich löschen. Andere Konten/Workspaces,
+deine PDFs und die stabile Installationskennung bleiben erhalten.
+Wenn kein Widerruf bestätigt werden kann, erscheint ein deutlicher Hinweis.
+
+Eine registrierte App-Freigabe in deinem ChatGPT-Konto wird durch das Löschen des
+lokalen Eintrags nicht automatisch entfernt. Trenne diese ggf. zusätzlich in den
+ChatGPT-Einstellungen. **Abmelden** bleibt separat verfügbar und behält den Eintrag
+für eine spätere Anmeldung. Nach dem Löschen ist eine neue Verbindung nötig.
+
 **Abbrechen** stoppt vor dem nächsten Arbeitsschritt. Eine bereits laufende
 Netzwerkanfrage oder Kopie wird zunächst beendet. Bereits bestätigte Dateien
 bleiben einsortiert. Schließe die App erst, wenn der laufende Vorgang beendet ist.
@@ -119,7 +137,7 @@ Nach einem Absturz: Nur wenn keine App-Instanz mehr läuft, den leeren Unterordn
 
 ## Status
 
-Version 1.0.1 ist ein Desktop-Release-Kandidat für das Kursprojekt. Automatisierte
+Version 1.0.2 ist ein Desktop-Release-Kandidat für das Kursprojekt. Automatisierte
 Tests sowie EXE-/Installationschecks sind Bestandteil des Builds; ein persönlicher
 Live-Test mit ChatGPT und deiner PDF-Sammlung bleibt erforderlich.
 All rights reserved. Drittanbieter-Komponenten behalten ihre eigenen Lizenzen.

@@ -9,14 +9,14 @@ from tkinter.scrolledtext import ScrolledText
 import webbrowser
 
 from .analysis import Metadata, UNCLASSIFIED
-from .chatgpt_auth import PLAN_SCOPE, load, refresh, session_lock, sign_in, sign_out
+from .chatgpt_auth import PLAN_SCOPE, delete_profile, load, refresh, session_lock, sign_in, sign_out
 from .chatgpt_client import ChatGPTClient
 from .desktop_service import (MODES, Cancelled, Topic, approved_mapping, archive_paper,
                               assign, prepare, skip_paper)
 from .files import destination
 from .scrollable import ScrollableFrame
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 
 
 class ArchiveApp:
@@ -135,6 +135,10 @@ class ArchiveApp:
         self.model_box.grid(row=4, column=0, columnspan=3, sticky='ew', pady=6)
         self.button(connection, 'Modelle laden', self.fetch_models).grid(row=5, column=0, sticky='w')
         ttk.Button(connection, text='Nutzung verwalten', command=lambda: webbrowser.open('https://chatgpt.com/#settings/Usage')).grid(row=5, column=1, padx=10)
+        self.delete_connection_button = self.button(connection, 'Verbindung löschen', self.delete_connection)
+        self.delete_connection_button.grid(row=6, column=0, sticky='w', pady=(12, 0))
+        ttk.Label(connection, text='Abmelden behält den Eintrag. Löschen entfernt die ausgewählte Verbindung aus dieser App.',
+                  wraplength=600).grid(row=7, column=0, columnspan=3, sticky='w', pady=(6, 0))
         connection.columnconfigure(0, weight=1)
         self.control(ttk.Checkbutton(page, variable=self.external,
                      text='Externe Verarbeitung mit ChatGPT erlauben')).pack(anchor='w', pady=(16, 5))
@@ -350,6 +354,51 @@ class ArchiveApp:
     def model_slug(self):
         index = self.model_box.current()
         return self.models[index]['slug'] if 0 <= index < len(self.models) else None
+
+    def delete_connection(self):
+        if self.busy:
+            return
+        selected = self.account_id
+        if not selected:
+            messagebox.showinfo('Verbindung auswählen', 'Bitte zuerst eine gespeicherte ChatGPT-Verbindung auswählen.', parent=self.root)
+            return
+        label = self.account.get()
+        if not messagebox.askyesno('Gespeicherte Verbindung löschen?',
+                f'{label}\n\nDiesen Eintrag und seine gespeicherten Anmeldedaten aus der App entfernen? '
+                'Die App versucht vorher, die Sitzung bei OpenAI zu widerrufen. '
+                'Eine verbleibende App-Freigabe kannst du in den ChatGPT-Einstellungen entfernen.\n\n'
+                'Deine PDFs und andere gespeicherte Verbindungen bleiben erhalten.',
+                parent=self.root, default='no'):
+            return
+        def job():
+            with session_lock():
+                state = load()
+                revoked = delete_profile(state, selected)
+                return state, revoked
+        def done(result):
+            state, revoked = result
+            self.restore_accounts(state)
+            self.models = []
+            self.model.set('')
+            self.model_box.configure(values=[])
+            if (self.collection and self.collection.mode == MODES[2]
+                    and self.analysis_account == selected):
+                self.invalidate()
+                self.target.set('ChatGPT-Verbindung gelöscht. Bitte neu verbinden und analysieren.')
+            self.status.set('Gespeicherte ChatGPT-Verbindung gelöscht.')
+            if revoked is False:
+                message = ('Der lokale Eintrag und seine Anmeldedaten wurden gelöscht. '
+                           'Der Widerruf bei OpenAI konnte nicht bestätigt werden. '
+                           'Bitte trenne die App zusätzlich in den ChatGPT-Einstellungen.')
+                messagebox.showwarning('Lokal gelöscht — Widerruf nicht bestätigt', message, parent=self.root)
+            else:
+                message = ('Der lokale Eintrag und seine Anmeldedaten wurden gelöscht. ' +
+                           ('Die gespeicherte Sitzung wurde bei OpenAI widerrufen. ' if revoked else
+                            'Für diesen Eintrag war keine erneuerbare Sitzung gespeichert. ') +
+                           'Eine verbleibende App-Freigabe kannst du in den ChatGPT-Einstellungen entfernen.')
+                messagebox.showinfo('Verbindung gelöscht', message, parent=self.root)
+            self.append_log(message)
+        self.start(job, done)
 
     def with_client(self, mode, selected, slug, function):
         if mode != MODES[2]:

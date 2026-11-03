@@ -4,6 +4,8 @@ import os
 import sys
 import unittest
 from types import SimpleNamespace
+from unittest.mock import patch
+from contextlib import nullcontext
 
 
 @unittest.skipUnless(sys.platform == 'win32' and os.environ.get('SRA_GUI_TESTS') == '1',
@@ -86,6 +88,33 @@ class LayoutTests(unittest.TestCase):
         event.widget = app.details
         self.assertIsNone(app.setup_scroll.wheel(event))
         self.assertEqual(viewport.yview(), unchanged)
+
+    def test_delete_connection_requires_confirmation_and_clears_account_and_models(self):
+        root, app = self.make_app(96 / 72)
+        state = {'host_id': 'synthetic-host', 'active': 'synthetic-client', 'profiles': [
+            {'client_id': 'synthetic-client', 'email': 'test@example.invalid', 'refresh_token': 'synthetic-token'}]}
+        app.restore_accounts(state)
+        app.models = [{'slug': 'mock', 'display_name': 'Mock'}]
+        app.model_box.configure(values=['Mock'])
+        app.model.set('Mock')
+        with patch('src.desktop.messagebox.askyesno', return_value=False), patch.object(app, 'start') as start:
+            app.delete_connection()
+            start.assert_not_called()
+        self.assertEqual(len(app.accounts), 1)
+        def run_now(job, done):
+            done(job())
+        with patch('src.desktop.messagebox.askyesno', return_value=True), \
+                patch('src.desktop.messagebox.showinfo'), \
+                patch('src.desktop.load', return_value=state), \
+                patch('src.desktop.session_lock', return_value=nullcontext()), \
+                patch('src.chatgpt_auth.revoke_session', return_value=True), \
+                patch('src.chatgpt_auth.save'), patch.object(app, 'start', side_effect=run_now):
+            app.delete_connection()
+        self.assertEqual(app.accounts, [])
+        self.assertIsNone(app.account_id)
+        self.assertEqual(app.account.get(), 'Neues Konto / Workspace')
+        self.assertEqual(app.models, [])
+        self.assertEqual(app.model.get(), '')
 
 
 if __name__ == '__main__':

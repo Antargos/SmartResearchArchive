@@ -308,24 +308,52 @@ def refresh(state, profile):
         raise ConnectionError('ChatGPT plan usage permission is missing.')
 
 
+def revoke_session(profile):
+    """True: revoked, False: unconfirmed, None: no renewable session saved.
+
+    This revokes the saved session, not the account's registered app grant.
+    """
+    if not profile.get('refresh_token'):
+        return None
+    try:
+        endpoint = request(AUTH + '/.well-known/openid-configuration')['revocation_endpoint']
+        if urlparse(endpoint).scheme != 'https' or urlparse(endpoint).netloc != 'auth.openai.com':
+            raise ConnectionError('Unexpected revocation endpoint.')
+        request(endpoint, dict(token=profile['refresh_token'], token_type_hint='refresh_token',
+                               client_id=profile['client_id']), form=True)
+        return True
+    except (ConnectionError, KeyError):
+        return False
+
+
 def sign_out(state, profile=None, show=None):
     show = print if show is None else show
     profile = select_profile(state) if profile is None else profile
     if profile is None:
         return
-    confirmed = False
-    try:
-        endpoint = request(AUTH + '/.well-known/openid-configuration')['revocation_endpoint']
-        if urlparse(endpoint).scheme != 'https' or urlparse(endpoint).netloc != 'auth.openai.com':
-            raise ConnectionError('Unexpected revocation endpoint.')
-        if profile.get('refresh_token'):
-            request(endpoint, dict(token=profile['refresh_token'], token_type_hint='refresh_token',
-                                   client_id=profile['client_id']), form=True)
-            confirmed = True
-    except (ConnectionError, KeyError):
-        pass
+    confirmed = revoke_session(profile)
     for key in ('access_token', 'refresh_token', 'id_token', 'expires_at', 'scope', 'scopes'):
         profile.pop(key, None)
     save(state)
     show('Signed out locally. ' + ('Renewable session revoked.' if confirmed else
           'Remote revocation was not confirmed; disconnect the app in ChatGPT Settings.'))
+
+
+def delete_profile(state, client_id):
+    """Forget exactly one saved registration under the caller's session lock.
+
+    Unlike sign-out, this removes the entire local account/client/token record.
+    The installation host ID and other account registrations are preserved.
+    """
+    profile = next((item for item in state['profiles'] if item['client_id'] == client_id), None)
+    if profile is None:
+        raise ValueError('Diese gespeicherte Verbindung existiert nicht mehr.')
+    revoked = revoke_session(profile)
+    updated = dict(state, profiles=[item for item in state['profiles'] if item['client_id'] != client_id])
+    if updated.get('active') == client_id:
+        updated['active'] = None
+    # Save first: a filesystem error must not report a deletion that was not persisted.
+    save(updated)
+    state.clear()
+    state.update(updated)
+    return revoked

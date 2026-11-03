@@ -201,3 +201,23 @@ Published update: https://github.com/Antargos/SmartResearchArchive/releases/tag/
 Validated code: `96a7c81bc28082c090d8a1060a4a4bb4acd78f22`.
 This is an automated reproduction of the size/scaling issue, not a personal test
 on the user's monitor. Close the running app before installing version 1.0.1.
+
+## 3 November 2026 — Delete saved ChatGPT connections
+
+User requested removal of existing ChatGPT connections from the app. Version 1.0.2
+adds Verbindung löschen next to the connection controls, with confirmation of the
+selected account/workspace. Unlike sign-out, deletion forgets the entire local
+registration and tokens. It attempts documented renewable-session revocation first,
+preserves other registrations (including ones with the same email) and the host ID,
+and clears the active pointer only if that registration was active. A missing
+renewable session or failed revocation never prevents local deletion; failed remote
+revocation is explicitly reported. A failed local write does not report success.
+
+The remote registered app grant is not deleted by this endpoint; the UI explains
+how to disconnect it in ChatGPT settings. Model choices are cleared after deletion,
+and a pending semantic preview using that registration is invalidated. PDFs remain
+untouched. Six isolated unit cases cover revocation, offline deletion, pending
+records, identical email registrations, missing IDs, disk failure and endpoint
+validation; a real Tk check covers confirmation cancellation and refreshed controls.
+Tests use synthetic records only, without deleting the user's actual connections.
+Codex drafted implementation, tests and documentation using official OpenAI Docs.
