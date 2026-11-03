@@ -3,7 +3,7 @@
 ## Installieren und aktualisieren
 
 Auf der [Release-Seite](https://github.com/Antargos/SmartResearchArchive/releases)
-**SmartResearchArchive-2.0.0-Setup.exe** herunterladen. Eine laufende ältere App
+**SmartResearchArchive-2.1.0-Setup.exe** herunterladen. Eine laufende ältere App
 schließen, dann installieren. Der Assistent installiert für dein Windows-Konto
 ohne Administratorrechte. Danach die App über das Startmenü starten.
 Windows 10/11, 64 Bit; Python ist im Download enthalten.
@@ -15,17 +15,47 @@ Die Downloads enthalten keine wissenschaftlichen PDFs.
 
 ## 1. Analyseart und Ordner wählen
 
-Zuerst **Lokal** oder **ChatGPT (LLM)** auswählen. Lokal bleibt der Dokumenttext auf
-deinem Rechner; die Zuordnung zählt nachvollziehbare Keyword-Treffer.
-ChatGPT wertet Textabschnitte inhaltlich aus und begründet seine Vorschläge.
+Du kannst zwischen drei Wegen wählen:
+
+1. **Lokal:** eigene Themen und Keywords vorgeben. Die App zählt nachvollziehbar
+   unterschiedliche Keyword-Treffer. Automatische lokale Themenvorschläge entfallen.
+2. **Lokal mit LLM-Keywords:** eigene Oberthemen und Beschreibungen vorgeben.
+   ChatGPT schlägt dazu Keywords vor; nach deiner Prüfung werden die PDFs lokal
+   zugeordnet. Für neue Downloads sind weder neue Keywords noch eine Anmeldung nötig,
+   solange du die gespeicherten Regeln verwendest.
+3. **ChatGPT (LLM):** vollständige Inhaltsanalyse aller auswertbaren Textabschnitte,
+   mit Zusammenfassungen, geprüften Belegstellen und begründeter Themenzuordnung.
+
+### Mischmodus: Oberthemen → Keywords → lokale Zuordnung
+
+Den Archivordner auswählen, **Lokal mit LLM-Keywords** wählen und **Themen / Keywords
+festlegen oder bearbeiten** öffnen. Über **Neues Thema** beispielsweise
+„Handwerk“ als sicheren Ordnernamen und „Handwerk im frühen Mittelalter“ als
+Beschreibung eingeben. Weitere Oberthemen lassen sich ebenso ergänzen, maximal fünf.
+
+Auf der Startseite ChatGPT verbinden, ein Modell wählen und externe Verarbeitung
+erlauben. Im Themenreiter **Keywords mit LLM vorschlagen** wählen. Die App sendet nur
+die eingegebenen Themen/Beschreibungen und gegebenenfalls vorhandene Keywords;
+sie liest dafür keine PDFs und sendet weder PDF-Inhalte noch Dateinamen.
+
+Jedes Thema auswählen, den Vorschlag prüfen und **Keyword-Entwurf für dieses Thema
+übernehmen** wählen. Die Begriffe lassen sich im Keyword-Feld ändern.
+Erst **Regeln bestätigen & weiter** und die anschließende Themenbestätigung nach
+der lokalen Analyse speichern die Regeln für dieses Archiv. Vorschläge allein
+ändern keine Archivregel. Die Keyword-Erzeugung ist lokal zwischengespeichert;
+eine geänderte Themenbeschreibung erzeugt einen neuen Vorschlag.
+
+Die lokale Zuordnung ist weiterhin wörtliches Keyword-Matching. Zeitliche,
+räumliche oder sachliche Zusammenhänge werden nicht wie im vollständigen LLM-Modus
+verstanden. Konkrete Phrasen sind oft hilfreicher als allgemeine Wörter;
+nicht passende und mehrdeutige Fälle landen in Unclassified. Vorschläge selbst prüfen.
 
 Danach wählen, woher die Themen kommen:
 
 - **Eigene Themen:** über **Themen / Keywords festlegen oder bearbeiten** Namen,
   Beschreibungen und Keywords eingeben. Das geht vor der ersten PDF-Analyse.
-- **Themen vorschlagen:** ChatGPT schlägt inhaltliche Kategorien vor. Lokal entstehen
-  lediglich ungeprüfte Begriffshilfen aus Titeln und Textanfängen. Diese sind nicht
-  vorausgewählt; wiederkehrende Wörter sind noch keine sinnvolle Forschungssystematik.
+- **Themen vorschlagen:** ausschließlich bei vollständiger ChatGPT-Analyse verfügbar.
+  ChatGPT schlägt inhaltliche Kategorien aus den Dokumentzusammenfassungen vor.
 - **Vorhandene Unterordner übernehmen:** über den Bearbeiten-Button vorhandene
   Ordnernamen als unbestätigten Entwurf laden, Beschreibung/Keywords ergänzen und
   bewusst auswählen. Unterordner werden dabei nicht inhaltlich analysiert.
@@ -43,14 +73,16 @@ Einsortieren haben ebenfalls feste Aktionsleisten.
 
 ## 2. ChatGPT verbinden (optional)
 
-Im LLM-Modus eine gespeicherte Verbindung auswählen oder **Mit ChatGPT verbinden**
+Für Keyword-Vorschläge oder die vollständige LLM-Analyse eine gespeicherte Verbindung auswählen oder **Mit ChatGPT verbinden**
 anklicken. Im Browser anmelden und die Nutzung des ChatGPT-Abos erlauben.
 Danach ein verfügbares Modell wählen und **Externe Verarbeitung mit ChatGPT erlauben**
 aktivieren. **Modelle laden** aktualisiert die Auswahl; **Nutzung verwalten** öffnet
 die ChatGPT-Einstellungen.
 
-Die App sendet extrahierte PDF-Texte und Zusammenfassungen an OpenAI. PDF-Dateien
-werden nicht als Originaldateien hochgeladen; im Modellkontext stehen interne IDs.
+Bei vollständiger LLM-Analyse sendet die App extrahierte PDF-Texte und
+Zusammenfassungen an OpenAI. Der Mischmodus sendet nur deine Themen zur
+Keyword-Erzeugung. PDF-Dateien oder Seitenbilder werden in keinem Modus hochgeladen;
+im Modellkontext stehen interne Dokument-IDs.
 Es wird kein API-Schlüssel benötigt. Die Verfügbarkeit von Konto, Workspace,
 Modellen und Abo-Limits bestimmt OpenAI. Den Live-Zugang mit dem eigenen Konto prüfen.
 
@@ -65,7 +97,7 @@ eine verbleibende App-Freigabe gegebenenfalls in den ChatGPT-Einstellungen trenn
 **PDFs analysieren** erzeugt eine Vorschau und verschiebt noch keine Datei.
 Fortschritt und Hinweise stehen unten und unter **Verlauf**.
 
-Bei eigenen LLM-Regeln prüft ChatGPT deren Eignung für die Dokumente. Die eigene
+Bei eigenen Regeln im vollständigen LLM-Modus prüft ChatGPT deren Eignung für die Dokumente. Die eigene
 Forschungsfrage bleibt maßgeblich. Neue Themen erscheinen als zusätzliche,
 nicht ausgewählte Vorschläge. Erst deine Auswahl und Bestätigung ändern die Regeln.
 Bei einem gespeicherten Archiv wird diese Themenprüfung nicht automatisch wiederholt.
@@ -185,7 +217,47 @@ Zugangsdaten liegen separat unter
 an dein Benutzerkonto gebunden. Die zuletzt gewählte Ordneradresse wird ebenfalls
 im Benutzerprofil gespeichert. Diese Daten nicht auf GitHub hochladen.
 
-Keine OCR: Bildscans ohne Textlayer und nicht lesbare PDFs gehen nach **Später prüfen**.
+### Gezielte lokale OCR
+
+**Lokale OCR bei fehlender oder unbrauchbarer Textebene** ist standardmäßig
+eingeschaltet. Jede Seite wird zuerst lokal auf vorhandenen Text geprüft.
+Brauchbare digitale oder bereits OCR-erfasste Seiten werden direkt ausgelesen.
+Nur fehlende oder offensichtlich unbrauchbare Textebenen führen zur OCR dieser Seite.
+Die Prüfung ist eine Heuristik; ein fehlerhafter, scheinbar plausibler Textlayer
+kann unerkannt bleiben. Kurze auswählbare Deckblatttexte ohne Bilder bleiben erhalten.
+
+Das Windows-Komplettpaket enthält PDFium und Tesseract samt Deutsch/Englisch.
+Bei Start aus Python müssen Tesseract und diese Sprachdaten separat installiert
+sein (Windows: Standardordner oder PATH). Zur Laufzeit werden keine OCR-Modelle
+aus dem Internet nachgeladen. Papierbilder und Zwischendateien bleiben lokal;
+temporäre Seitenbilder werden nach dem OCR-Schritt entfernt.
+
+Erfolgreiche OCR-Seiten werden sofort gespeichert. Nach einem Abbruch werden sie
+wiederverwendet. Die Original-PDF und ihre eingebettete Textebene bleiben unverändert;
+erkannter Text steht im lokalen Analysecache. Bei einer fehlgeschlagenen Seite
+wird die PDF als **Später prüfen** vorgemerkt; es wird kein unvollständiger Teiltext
+unbemerkt an das LLM geschickt. OCR kann ausgeschaltet werden; dann benötigen
+fehlende Textebenen manuelle Prüfung. Handschrift, Fraktur, schwierige Tabellen,
+schlechte Scans und andere Sprachen sind nicht als zuverlässig unterstützt zugesichert.
+OCR-Ergebnisse am Original kontrollieren.
+
+### Beschleunigung der vollständigen LLM-Analyse
+
+Standardmäßig laufen höchstens zwei Dokumentanalysen gleichzeitig. Die Option
+**Vollständige LLM-Analyse: zwei PDFs gleichzeitig bearbeiten** lässt sich für
+empfindliche Kontolimits abschalten. Es werden keine unbegrenzten Anfragen gestartet.
+Bereits laufende Anfragen können bei einem Abbruch oder Anbieterfehler noch enden;
+die übrigen Dokumente werden nicht automatisch weiter eingeplant.
+
+Bei gespeicherten Themen werden Zusammenfassung und Themenzuordnung nach Möglichkeit
+in derselben Anfrage erledigt. Sonst werden bis zu vier Zusammenfassungen gemeinsam
+zugeordnet; nach einer Regeländerung sind vorhandene Zusammenfassungen weiter nutzbar.
+Alle Textabschnitte werden weiterhin berücksichtigt; keine stillschweigende Kürzung.
+Die tatsächliche Beschleunigung hängt von Modell, Dokumentlänge und Abo-Limits ab.
+Die erste Analyse in Version 2.1 kann Texte wegen der neuen OCR-Prüfung erneut
+einlesen. Danach greifen die neuen, inhaltsbezogenen Zwischenspeicher.
+
+
 Unbelegte Modellzitate werden abgelehnt; sie führen zur manuellen Prüfung dieser
 Datei. Konten-/Netzwerk-/Limitfehler stoppen den Lauf, gespeicherte Schritte bleiben
 erhalten. Es gibt keine versteckten automatischen Wiederholungen.

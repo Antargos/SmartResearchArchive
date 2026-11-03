@@ -237,6 +237,12 @@ class LayoutTests(unittest.TestCase):
                 app.analyze()
                 root.update()
                 app.classify()
+                app.invalidate()
+                app.load_archive_profile()
+                self.assertEqual(app.engine.get(), 'Lokal mit LLM-Keywords')
+                app.account_id = None
+                app.external.set(False)
+                app.analyze()
             self.assertTrue(app.ready)
             self.assertEqual(app.collection.papers[0].topic, 'Methods')
             self.assertEqual(len(model.calls), 1)

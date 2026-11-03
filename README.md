@@ -1,15 +1,15 @@
 # Smart Research Archive
 
-## Windows desktop version 2.0.0
+## Windows desktop version 2.1.0
 
-Branch **`feature/archive-workflow-v2`** adds a persistent, reviewed archive workflow
+Branch **`feature/three-analysis-modes`** adds a persistent, reviewed archive workflow
 to the German desktop app. Download the Windows installer or portable ZIP from
 [Releases](https://github.com/Antargos/SmartResearchArchive/releases).
 The build publishes downloads after regression tests, real Windows GUI checks,
 packaged startup, installation and uninstallation checks succeed.
 
-1. Install **SmartResearchArchive-2.0.0-Setup.exe** and open the app from the Start menu.
-2. Choose **Lokal** or **ChatGPT (LLM)**, then your own topics/keywords or suggestions.
+1. Install **SmartResearchArchive-2.1.0-Setup.exe** and open the app from the Start menu.
+2. Choose **Lokal**, **Lokal mit LLM-Keywords**, or **ChatGPT (LLM)**.
 3. Select your PDF folder. For ChatGPT, connect in the browser, choose a model and
    allow external processing.
 4. **PDFs analysieren**, review the topics, then **Regeln bestätigen & weiter**.
@@ -23,8 +23,11 @@ through **Bestehende Sammlung ausdrücklich neu prüfen**, followed by file revi
 Old folder names are retained when rules change; a rule edit does not rename folders.
 
 ChatGPT checks user-defined topics without replacing them. Optional additions
-require selection and confirmation. Local proposals are unselected vocabulary
-helpers, not reliable semantic categories. At most five topics can be approved;
+require selection and confirmation. Local automatic topic proposals have been
+removed. The hybrid workflow generates keyword drafts from your own topic definitions,
+without reading or transmitting PDFs; adoption and final rule confirmation are explicit.
+It then uses local keyword scoring, including on future downloads without a new login.
+At most five topics can be approved;
 unmatched or ambiguous files use Unclassified. Keywords are required locally;
 ChatGPT uses descriptions and keywords as content guidance. No embeddings.
 
@@ -48,7 +51,16 @@ all files and keep `_internal` beside the EXE. Close the old app before updating
 The installer is unsigned. Keep backups: file confirmation changes the original
 collection. Existing files are not overwritten, and changed sources require reanalysis.
 Duplicate detection means identical bytes, not matching scholarly works.
-OCR, CSV output and scholarly accuracy guarantees are outside scope.
+Page-selective local OCR checks existing text before rendering missing/broken layers.
+The Windows package includes Tesseract with German/English and PDFium. Successful OCR
+pages are cached; PDFs are never rewritten. Failed pages require manual review and do
+not silently produce partial LLM input. Handwriting/Fraktur are not guaranteed.
+CSV output and scholarly accuracy guarantees remain outside scope.
+
+Full LLM mode uses at most two concurrent document analyses (optional), groups up to
+four summary-based assignments, and combines summary/assignment for existing rules.
+Full text coverage and quote verification remain. Tests prove bounded overlap and
+fewer requests with simulated providers; no live speed factor is claimed.
 
 Saved ChatGPT connections can still be removed with **Verbindung löschen**.
 Live eligibility and model quality need evaluation with your own account.
@@ -61,7 +73,7 @@ No research PDFs or credentials are committed to GitHub.
 ```sh
 python -m pip install -r requirements.txt
 python desktop_app.py
-# Windows builds additionally need Inno Setup 6.3+:
+# Windows builds additionally need Inno Setup 6.3+ and Tesseract (deu + eng):
 python -m pip install -r requirements-build.txt
 python tools/build_windows.py
 ```

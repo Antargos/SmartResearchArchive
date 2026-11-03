@@ -14,7 +14,7 @@ from src.archive_store import ArchiveStore
 from src.archive_workflow import (STRATEGIES, assign_archive, keyword_draft, prepare_archive)
 from src.desktop_service import MODES, Collection, Paper, Topic, approved_mapping
 from src.analysis import Metadata
-from src.chatgpt_auth import ModelOutputError
+from src.chatgpt_auth import ConnectionError, ModelOutputError
 from src.ocr import extract_document
 from src.semantic import classify_batch, generate_keywords
 from test_archive import make_pdf
@@ -133,6 +133,33 @@ class ProcessingTests(unittest.TestCase):
             self.assertEqual(maximum, 2)
             self.assertTrue(all(p.analysis for p in collection.papers))
 
+    def test_provider_failure_does_not_schedule_more_documents_and_keeps_completed_work(self):
+        barrier, lock = threading.Barrier(2), threading.Lock()
+        calls = []
+        class Interrupted:
+            def json_result(self, instructions, content):
+                with lock:
+                    index = len(calls)
+                    calls.append(content)
+                barrier.wait(timeout=10)
+                if index == 0:
+                    raise ConnectionError('usage limit')
+                return {'summary': 'Historical methods', 'evidence': ['Digital history']}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for i in range(3):
+                make_pdf(root / f'{i}.pdf')
+                with (root / f'{i}.pdf').open('ab') as file:
+                    file.write(f'\n%{i}'.encode())
+            with self.assertRaises(ConnectionError):
+                prepare_archive(root, MODES[2], STRATEGIES[0], topics(), 'mock', Interrupted())
+            self.assertEqual(len(calls), 2)
+            with ArchiveStore(root).connection() as db:
+                self.assertEqual(db.execute("SELECT count(*) FROM cache WHERE kind='summary'").fetchone()[0], 1)
+            resumed = Reply({'summary': 'Historical methods', 'evidence': ['Digital history']})
+            prepare_archive(root, MODES[2], STRATEGIES[0], topics(), 'mock', resumed)
+            self.assertEqual(len(resumed.calls), 2)
+
     def test_ocr_only_missing_page_then_reuses_saved_text_and_keeps_pdf_unchanged(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -181,6 +208,22 @@ class ProcessingTests(unittest.TestCase):
             metadata, text, complete = extract_document(path, ArchiveStore(root), 'digest', False, recognizer=recognize)
             self.assertFalse(complete)
             recognize.assert_not_called()
+
+    def test_failed_later_ocr_page_resumes_without_repeating_successful_page(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = root / 'scan.pdf'
+            writer = PdfWriter()
+            for i in range(2):
+                writer.add_blank_page(width=300, height=300)
+            writer.write(path)
+            store = ArchiveStore(root)
+            first = Mock(side_effect=['Early medieval crafts and historical workshops', ValueError('bad page')])
+            self.assertFalse(extract_document(path, store, 'digest', recognizer=first)[2])
+            resumed = Mock(return_value='More historical workshops and craft production')
+            self.assertTrue(extract_document(path, store, 'digest', recognizer=resumed)[2])
+            self.assertEqual(resumed.call_count, 1)
+            self.assertEqual(resumed.call_args.args[1], 1)
 
     @unittest.skipUnless(os.environ.get('SRA_OCR_TESTS') == '1', 'Real OCR runs in the Windows packaging check.')
     def test_real_scan_ocr(self):

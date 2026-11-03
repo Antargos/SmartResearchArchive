@@ -334,3 +334,47 @@ Windows release: https://github.com/Antargos/SmartResearchArchive/releases/tag/d
 Branch: feature/archive-workflow-v2. Installer, portable ZIP, build information and
 SHA256 checksums are published. The installer remains unsigned. No live ChatGPT
 requests, real account actions or copyrighted research PDFs were used in validation.
+
+## 3 November 2026 — Three analysis paths, selective OCR and fewer LLM waits
+
+The user explicitly approved all changes discussed since the three-mode proposal,
+including selective OCR and the performance suggestions. Implementation is isolated
+on feature/three-analysis-modes, version 2.1.0. Codex drafted the code and synthetic
+tests; previous branches/releases remain available. No research PDFs are committed.
+
+The desktop now separates manual local keywords, LLM-generated keyword drafts for
+user-defined upper topics followed by local scoring, and full semantic LLM analysis.
+Local automatic topic proposals are removed from the desktop workflow. The older
+CLI vocabulary experiment remains documented separately. Hybrid generation sends only
+user topic definitions, never PDF text or filenames; generated terms need adoption
+per topic and final rule confirmation. Existing hybrid profiles can sort new files
+without a connected account. Profiles retain backward compatibility with version 2.
+
+Full semantic processing uses a bounded two-worker window (or one when disabled),
+groups up to four summary-based assignments, and can combine summary and assignment
+for already-approved rules. Token refresh is serialized while model requests can
+overlap. Provider/usage errors do not queue further windows or introduce retries.
+Completed concurrent work is checkpointed. Cache keys include extracted text so later
+OCR cannot accidentally reuse a summary of a different text layer. All sections and
+quote validation remain; no silent excerpt-only shortcut.
+
+Page-selective local OCR reuses existing useful text. Missing/broken layers are
+rendered locally with PDFium and recognized using Tesseract with German/English.
+Only successful pages are checkpointed; originals are not rewritten. A failed page
+makes the document deferred, avoiding silent LLM interpretation of partial text.
+The Windows installer and portable bundle contain the OCR runtime, language data
+and third-party notices. Runtime OCR downloads are unnecessary. Existing text quality
+is judged heuristically; handwriting/Fraktur and arbitrary languages are not promised.
+
+Performance approach follows official OpenAI guidance (fewer requests, bounded
+parallel work): https://developers.openai.com/api/docs/guides/latency-optimization
+Authentication transport retains streamed, unstored Responses requests:
+https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference
+OCR/rendering references: https://tesseract-ocr.github.io/tessdoc/Installation.html
+and https://pypi.org/project/pypdfium2/5.14.0/
+
+The first Windows run passed the new real-OCR source check, regression suite,
+dedicated GUI checks and source startup, and reached packaging. Additional checks
+cover interrupted concurrent work and resuming partial OCR. Final installer/build
+results are recorded below when complete. Simulated-provider tests demonstrate
+request reductions and actual overlap, not a guaranteed live speed multiplier.
